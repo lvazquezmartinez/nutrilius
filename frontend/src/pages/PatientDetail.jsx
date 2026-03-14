@@ -33,6 +33,8 @@ export default function PatientDetail() {
   const [selectedAnamnesis, setSelectedAnamnesis] = useState(null)
   const [editAnamnesisMode, setEditAnamnesisMode] = useState(false)
   const [selectedAnamnesisData, setSelectedAnamnesisData] = useState({})
+  const [settings, setSettings] = useState({ planEnabled: false })
+  const [planText, setPlanText] = useState('')
   const [tooltip, setTooltip] = useState({ visible: false, x: 0, y: 0, text: '', chartKey: null })
 
   const loadAll = () => {
@@ -45,6 +47,10 @@ export default function PatientDetail() {
     api.get(`/patients/${id}/metrics`).then((res) => setMetrics(res.data))
     api.get('/anamnesis-template').then((res) => setAnamnesisTemplate(JSON.parse(res.data.templateJson)))
     api.get(`/patients/${id}/evolutions`).then((res) => setEvolutions(res.data))
+    api.get('/settings').then((res) => setSettings(res.data)).catch(() => {})
+    api.get(`/patients/${id}/plan`).then((res) => {
+      if (res.data) setPlanText(res.data.contentText || '')
+    }).catch(() => {})
   }
 
   useEffect(() => {
@@ -142,6 +148,15 @@ export default function PatientDetail() {
       loadAll()
     } catch (err) {
       setError(err?.response?.data?.error || 'Error guardando métricas')
+    }
+  }
+
+  const savePlan = async () => {
+    setError('')
+    try {
+      await api.put(`/patients/${id}/plan`, { contentText: planText })
+    } catch (err) {
+      setError(err?.response?.data?.error || 'Error guardando plan')
     }
   }
 
@@ -508,6 +523,19 @@ export default function PatientDetail() {
           {renderLineChart('Cuello (cm)', 'neckCm', 'cm')}
         </div>
       </div>
+
+      {settings.planEnabled && (
+        <div className="card">
+          <div className="card-header bg-warning">Plan alimenticio</div>
+          <div className="card-body">
+            <textarea className="form-control" rows="8" value={planText} onChange={(e) => setPlanText(e.target.value)} placeholder="Escribí el plan alimenticio..."></textarea>
+            <div className="d-flex gap-2 mt-2">
+              <button className="btn btn-primary" onClick={savePlan}>Guardar</button>
+              <a className="btn btn-outline-secondary" href={`/patients/${id}/plan/pdf`} target="_blank" rel="noreferrer">Ver PDF</a>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

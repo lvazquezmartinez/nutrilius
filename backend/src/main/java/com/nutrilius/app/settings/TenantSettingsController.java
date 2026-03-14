@@ -17,7 +17,7 @@ public class TenantSettingsController {
   }
 
   @GetMapping
-  @PreAuthorize("hasRole('ADMIN')")
+  @PreAuthorize("hasAnyRole('ADMIN','USER')")
   public ResponseEntity<TenantSettingsResponse> get() {
     return ResponseEntity.ok(service.get());
   }

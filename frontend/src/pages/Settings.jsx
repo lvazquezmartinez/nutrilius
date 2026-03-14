@@ -8,6 +8,7 @@ export default function Settings() {
   const [insurances, setInsurances] = useState([])
   const [insuranceName, setInsuranceName] = useState('')
   const [templateJson, setTemplateJson] = useState('')
+  const [settings, setSettings] = useState({ nutritionistName: '', businessName: '', licenseNumber: '', planEnabled: false, hasLogo: false })
   const [error, setError] = useState('')
 
   useEffect(() => {
@@ -18,6 +19,9 @@ export default function Settings() {
     api.get('/anamnesis-template')
       .then((res) => setTemplateJson(res.data.templateJson))
       .catch((err) => setError(err?.response?.data?.error || 'Error cargando plantilla de anamnesis'))
+    api.get('/settings')
+      .then((res) => setSettings(res.data))
+      .catch((err) => setError(err?.response?.data?.error || 'Error cargando configuración'))
   }, [user?.role])
 
   if (user?.role !== 'ADMIN') {
@@ -59,6 +63,36 @@ export default function Settings() {
     }
   }
 
+  const saveSettings = async (e) => {
+    e.preventDefault()
+    setError('')
+    try {
+      const res = await api.put('/settings', {
+        nutritionistName: settings.nutritionistName,
+        businessName: settings.businessName,
+        licenseNumber: settings.licenseNumber,
+        planEnabled: settings.planEnabled
+      })
+      setSettings(res.data)
+    } catch (err) {
+      setError(err?.response?.data?.error || 'Error guardando configuración')
+    }
+  }
+
+  const uploadLogo = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const form = new FormData()
+    form.append('file', file)
+    try {
+      await api.post('/settings/logo', form, { headers: { 'Content-Type': 'multipart/form-data' } })
+      const res = await api.get('/settings')
+      setSettings(res.data)
+    } catch (err) {
+      setError(err?.response?.data?.error || 'Error subiendo logo')
+    }
+  }
+
   const resetTemplate = async () => {
     setError('')
     try {
@@ -75,6 +109,40 @@ export default function Settings() {
       <h2 className="mb-3">Configuración</h2>
       {error && <div className="alert alert-danger">{error}</div>}
       <div className="card">
+        <div className="card-header">Datos del profesional</div>
+        <div className="card-body">
+          <form onSubmit={saveSettings} className="row g-3">
+            <div className="col-md-4">
+              <label className="form-label">Nombre completo</label>
+              <input className="form-control" value={settings.nutritionistName || ''} onChange={(e) => setSettings({ ...settings, nutritionistName: e.target.value })} />
+            </div>
+            <div className="col-md-4">
+              <label className="form-label">Nombre del negocio</label>
+              <input className="form-control" value={settings.businessName || ''} onChange={(e) => setSettings({ ...settings, businessName: e.target.value })} />
+            </div>
+            <div className="col-md-4">
+              <label className="form-label">Matrícula</label>
+              <input className="form-control" value={settings.licenseNumber || ''} onChange={(e) => setSettings({ ...settings, licenseNumber: e.target.value })} />
+            </div>
+            <div className="col-md-4">
+              <label className="form-label">Logo (marca de agua)</label>
+              <input className="form-control" type="file" accept="image/*" onChange={uploadLogo} />
+              {settings.hasLogo && <div className="text-muted small mt-1">Logo cargado</div>}
+            </div>
+            <div className="col-md-4 d-flex align-items-end">
+              <div className="form-check">
+                <input className="form-check-input" type="checkbox" checked={!!settings.planEnabled} onChange={(e) => setSettings({ ...settings, planEnabled: e.target.checked })} />
+                <label className="form-check-label">Habilitar plan alimenticio</label>
+              </div>
+            </div>
+            <div className="col-12">
+              <button className="btn btn-primary" type="submit">Guardar</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <div className="card mt-4">
         <div className="card-header">Obras sociales</div>
         <div className="card-body">
           <form onSubmit={createInsurance} className="row g-2 mb-3">
