@@ -1,0 +1,36 @@
+server:
+  port: ${APP_PORT:8080}
+
+spring:
+  datasource:
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:nutrilius}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    username: ${DB_USER:root}
+    password: ${DB_PASSWORD:root}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        type:
+          preferred_enum_type: STRING
+  flyway:
+    enabled: true
+
+app:
+  jwt:
+    secret: ${JWT_SECRET:dev-secret-change-me-please-change-32chars}
+    expiration-minutes: ${JWT_EXP_MINUTES:480}
+  seed:
+    enabled: ${APP_SEED:true}
+    super-admin-email: ${APP_SUPER_ADMIN_EMAIL:super@nutrilius.local}
+    super-admin-password: ${APP_SUPER_ADMIN_PASSWORD:super123}
+    demo-tenant-name: ${APP_DEMO_TENANT_NAME:Demo Nutricion}
+    demo-admin-email: ${APP_DEMO_ADMIN_EMAIL:admin@demo.local}
+    demo-admin-password: ${APP_DEMO_ADMIN_PASSWORD:admin123}
+    demo-user-email: ${APP_DEMO_USER_EMAIL:user@demo.local}
+    demo-user-password: ${APP_DEMO_USER_PASSWORD:user123}
+
+logging:
+  level:
+    org.springframework.security: INFO

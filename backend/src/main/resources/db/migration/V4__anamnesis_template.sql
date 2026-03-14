@@ -1,0 +1,9 @@
+ALTER TABLE anamneses ADD COLUMN data_json TEXT NULL;
+
+CREATE TABLE anamnesis_templates (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  tenant_id BIGINT NOT NULL UNIQUE,
+  template_json TEXT NOT NULL,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT fk_anamnesis_template_tenant FOREIGN KEY (tenant_id) REFERENCES tenants(id)
+);

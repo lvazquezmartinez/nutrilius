@@ -1,0 +1,134 @@
+/* 1. Estructura Global */
+body {
+  background: #f5f5f5;
+  margin: 0; /* Asegúrate de que no haya márgenes por defecto */
+}
+
+.app-layout {
+  display: flex; /* Alinea Sidebar y Main horizontalmente */
+  min-height: 100vh;
+}
+
+/* 2. Barra Lateral (Sidebar) */
+.sidebar {
+  width: 220px;
+  min-width: 220px;
+  height: 100vh;
+  position: sticky;
+  top: 0;
+  padding: 1.5rem 1rem;
+  background: white;
+  border-right: 1px solid #eee; /* Separación visual con el contenido */
+  display: flex;
+  flex-direction: column;
+  box-shadow: 2px 0 5px rgba(0,0,0,0.02);
+}
+
+.sidebar-header {
+  font-weight: 700;
+  font-size: 1.4rem;
+  margin-bottom: 2rem;
+  color: #333;
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  flex-grow: 1; /* Empuja el footer hacia abajo */
+}
+
+.sidebar-link {
+  text-decoration: none;
+  color: #444;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  transition: all 0.2s;
+}
+
+.sidebar-link:hover {
+  background: #eef4ff;
+  color: #0d6efd;
+}
+
+.sidebar-link.active {
+  background: #0d6efd;
+  color: #fff;
+}
+
+.sidebar-footer {
+  margin-top: auto; /* Se asegura de estar al fondo */
+  padding-top: 1rem;
+  border-top: 1px solid #f5f5f5;
+}
+
+/* 3. Contenido Principal */
+main {
+  flex-grow: 1;
+  padding: 2rem;
+  overflow-y: auto;
+}
+
+/* 4. Utilidades adicionales */
+.container-narrow {
+  max-width: 980px;
+  margin: 0 auto;
+}
+
+.card {
+  margin-bottom: 1.5rem;
+}
+
+textarea {
+  resize: none;
+}
+
+.chart-tooltip {
+  position: absolute;
+  background: rgba(0, 0, 0, 0.8);
+  color: #fff;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  pointer-events: none;
+  z-index: 5;
+  white-space: nowrap;
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-card {
+  background: #fff;
+  border-radius: 8px;
+  width: min(900px, 92vw);
+  max-height: 85vh;
+  overflow: auto;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+}
+
+.modal-header,
+.modal-footer {
+  padding: 1rem;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.modal-footer {
+  border-top: 1px solid #eee;
+  border-bottom: none;
+  gap: 0.5rem;
+}
+
+.modal-body {
+  padding: 1rem;
+}

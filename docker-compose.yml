@@ -1,0 +1,48 @@
+version: "3.9"
+
+services:
+  db:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: nutrilius
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+
+  backend:
+    build:
+      context: ./backend
+    environment:
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_NAME: nutrilius
+      DB_USER: root
+      DB_PASSWORD: root
+      JWT_SECRET: change-me-super-secret-32chars-minimum
+      APP_CORS_ORIGINS: http://localhost:5173,http://localhost:8080
+      APP_SEED: "true"
+      APP_SUPER_ADMIN_EMAIL: super@nutrilius.local
+      APP_SUPER_ADMIN_PASSWORD: super123
+      APP_DEMO_ADMIN_EMAIL: admin@demo.local
+      APP_DEMO_ADMIN_PASSWORD: admin123
+      APP_DEMO_USER_EMAIL: user@demo.local
+      APP_DEMO_USER_PASSWORD: user123
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_URL: http://localhost:8080
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
+
+volumes:
+  db_data:
