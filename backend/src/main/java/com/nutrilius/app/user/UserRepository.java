@@ -7,6 +7,7 @@ import org.springframework.data.repository.query.Param;
 
 public interface UserRepository extends JpaRepository<User, Long> {
   Optional<User> findByEmail(String email);
+  Optional<User> findByVerificationToken(String verificationToken);
 
   @Query("select u from User u where u.tenant.id = :tenantId and u.role = com.nutrilius.app.common.Role.ADMIN")
   Optional<User> findAdminByTenantId(@Param("tenantId") Long tenantId);

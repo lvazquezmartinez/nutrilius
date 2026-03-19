@@ -1,0 +1,61 @@
+services:
+  db:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: nutrilius
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+
+  backend:
+    image: lichori/nutrilius-backend:latest
+    env_file:
+      - .env
+    environment:
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_NAME: nutrilius
+      DB_USER: root
+      DB_PASSWORD: root
+      JWT_SECRET: change-me-super-secret-32chars-minimum
+      APP_CORS_ORIGINS: https://nutrilius.com.ar,https://api.nutrilius.com.ar
+      APP_PUBLIC_URL: https://nutrilius.com.ar
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+    expose:
+      - "8080"
+    depends_on:
+      - db
+
+  frontend:
+    image: lichori/nutrilius-frontend:latest
+    expose:
+      - "80"
+    depends_on:
+      - backend
+
+  nginx:
+    image: nginx:1.25-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./certbot/www:/var/www/certbot
+      - ./certbot/conf:/etc/letsencrypt
+    depends_on:
+      - frontend
+      - backend
+
+  certbot:
+    image: certbot/certbot:v2.10.0
+    volumes:
+      - ./certbot/www:/var/www/certbot
+      - ./certbot/conf:/etc/letsencrypt
+    entrypoint: ["/bin/sh", "-c"]
+    command: >
+      "trap exit TERM; while :; do sleep 12h & wait $$!; certbot renew --webroot -w /var/www/certbot; done"
+
+volumes:
+  db_data:

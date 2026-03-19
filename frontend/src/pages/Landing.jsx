@@ -9,7 +9,7 @@ export default function Landing() {
           <div className="landing-logo">Nutrilius</div>
           <div className="landing-nav-actions">
             <Link className="landing-link" to="/login">Ingresar</Link>
-            <a className="landing-btn landing-btn-primary" href="#demo">Pedir demo</a>
+            <Link className="landing-btn landing-btn-primary" to="/register">Registrate</Link>
           </div>
         </nav>
 
@@ -22,7 +22,7 @@ export default function Landing() {
               simple y potente. Menos planillas, más tiempo con tus pacientes.
             </p>
             <div className="landing-cta-row">
-              <a className="landing-btn landing-btn-primary" href="#demo">Quiero una demo</a>
+              <Link className="landing-btn landing-btn-primary" to="/register">Crear cuenta</Link>
               <Link className="landing-btn landing-btn-ghost" to="/login">Ya tengo cuenta</Link>
             </div>
             <div className="landing-microcopy">
@@ -123,7 +123,7 @@ export default function Landing() {
           </div>
         </div>
         <div className="landing-cta-row landing-cta-center">
-          <a className="landing-btn landing-btn-primary" href="mailto:hola@nutrilius.com">Agendar una llamada</a>
+          <Link className="landing-btn landing-btn-primary" to="/register">Empezar ahora</Link>
           <Link className="landing-btn landing-btn-ghost" to="/login">Ingresar ahora</Link>
         </div>
       </section>
@@ -154,7 +154,7 @@ export default function Landing() {
           <p>La plataforma que te ayuda a escalar tu práctica.</p>
         </div>
         <div className="landing-footer-links">
-          <a href="#demo">Solicitar demo</a>
+          <Link to="/register">Registrate</Link>
           <Link to="/login">Ingresar</Link>
         </div>
       </footer>

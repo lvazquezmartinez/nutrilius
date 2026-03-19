@@ -14,6 +14,7 @@ services:
   backend:
     build:
       context: ./backend
+    image: lichori/nutrilius-backend:latest
     env_file:
       - .env
     environment:
@@ -35,6 +36,7 @@ services:
       context: ./frontend
       args:
         VITE_API_URL: http://localhost:8080
+    image: lichori/nutrilius-frontend:latest
     ports:
       - "5173:80"
     depends_on:

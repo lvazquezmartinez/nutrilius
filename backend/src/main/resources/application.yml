@@ -31,6 +31,7 @@ spring:
 app:
   env: ${APP_ENV:prod}
   debug: ${APP_DEBUG:false}
+  public-url: ${APP_PUBLIC_URL:http://localhost:5173}
   jwt:
     secret: ${JWT_SECRET:dev-secret-change-me-please-change-32chars}
     expiration-minutes: ${JWT_EXP_MINUTES:480}

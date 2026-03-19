@@ -32,6 +32,15 @@ public class User {
   @Column(nullable = false)
   private boolean active = true;
 
+  @Column(name = "email_verified", nullable = false)
+  private boolean emailVerified = false;
+
+  @Column(name = "verification_token")
+  private String verificationToken;
+
+  @Column(name = "verification_expires")
+  private Instant verificationExpires;
+
   @Column(name = "created_at", nullable = false, updatable = false)
   private Instant createdAt = Instant.now();
 
@@ -77,6 +86,30 @@ public class User {
 
   public void setActive(boolean active) {
     this.active = active;
+  }
+
+  public boolean isEmailVerified() {
+    return emailVerified;
+  }
+
+  public void setEmailVerified(boolean emailVerified) {
+    this.emailVerified = emailVerified;
+  }
+
+  public String getVerificationToken() {
+    return verificationToken;
+  }
+
+  public void setVerificationToken(String verificationToken) {
+    this.verificationToken = verificationToken;
+  }
+
+  public Instant getVerificationExpires() {
+    return verificationExpires;
+  }
+
+  public void setVerificationExpires(Instant verificationExpires) {
+    this.verificationExpires = verificationExpires;
   }
 
   public Instant getCreatedAt() {

@@ -1,5 +1,5 @@
-import React, { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import React, { useState, useMemo } from 'react'
+import { useNavigate, useLocation } from 'react-router-dom'
 import api from '../api/client'
 
 export default function Login() {
@@ -7,6 +7,8 @@ export default function Login() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const navigate = useNavigate()
+  const location = useLocation()
+  const confirmed = useMemo(() => new URLSearchParams(location.search).get('confirmed') === '1', [location.search])
 
   const submit = async (e) => {
     e.preventDefault()
@@ -31,6 +33,7 @@ export default function Login() {
       <div className="card shadow-sm">
         <div className="card-body">
           <h3 className="mb-3">Ingreso</h3>
+          {confirmed && <div className="alert alert-success">Email confirmado. Ya podés ingresar.</div>}
           {error && <div className="alert alert-danger">{error}</div>}
           <form onSubmit={submit}>
             <div className="mb-3">

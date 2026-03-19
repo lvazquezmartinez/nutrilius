@@ -61,6 +61,7 @@ public class DataInitializer implements CommandLineRunner {
       superAdmin.setPasswordHash(passwordEncoder.encode(superAdminPassword));
       superAdmin.setRole(Role.SUPER_ADMIN);
       superAdmin.setActive(true);
+      superAdmin.setEmailVerified(true);
       superAdmin.setTenant(null);
       userRepository.save(superAdmin);
     }
@@ -81,6 +82,7 @@ public class DataInitializer implements CommandLineRunner {
       admin.setPasswordHash(passwordEncoder.encode(demoAdminPassword));
       admin.setRole(Role.ADMIN);
       admin.setActive(true);
+      admin.setEmailVerified(true);
       admin.setTenant(demoTenant);
       userRepository.save(admin);
     }
@@ -91,6 +93,7 @@ public class DataInitializer implements CommandLineRunner {
       user.setPasswordHash(passwordEncoder.encode(demoUserPassword));
       user.setRole(Role.USER);
       user.setActive(true);
+      user.setEmailVerified(true);
       user.setTenant(demoTenant);
       userRepository.save(user);
     }
