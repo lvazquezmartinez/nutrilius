@@ -29,7 +29,7 @@ public class SecurityConfig {
         .authorizeHttpRequests(auth -> auth
             .requestMatchers("/auth/login", "/auth/register", "/auth/confirm", "/actuator/health").permitAll()
             .anyRequest().authenticated())
-        .addFilterBefore(originValidationFilter, JwtAuthFilter.class)
+        .addFilterBefore(originValidationFilter, UsernamePasswordAuthenticationFilter.class)
         .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
     return http.build();
   }
