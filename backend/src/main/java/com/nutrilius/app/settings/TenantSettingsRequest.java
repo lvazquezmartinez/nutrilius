@@ -4,7 +4,7 @@ public class TenantSettingsRequest {
   private String nutritionistName;
   private String businessName;
   private String licenseNumber;
-  private Boolean planEnabled;
+  private String planType;
 
   public String getNutritionistName() { return nutritionistName; }
   public void setNutritionistName(String nutritionistName) { this.nutritionistName = nutritionistName; }
@@ -12,6 +12,6 @@ public class TenantSettingsRequest {
   public void setBusinessName(String businessName) { this.businessName = businessName; }
   public String getLicenseNumber() { return licenseNumber; }
   public void setLicenseNumber(String licenseNumber) { this.licenseNumber = licenseNumber; }
-  public Boolean getPlanEnabled() { return planEnabled; }
-  public void setPlanEnabled(Boolean planEnabled) { this.planEnabled = planEnabled; }
+  public String getPlanType() { return planType; }
+  public void setPlanType(String planType) { this.planType = planType; }
 }

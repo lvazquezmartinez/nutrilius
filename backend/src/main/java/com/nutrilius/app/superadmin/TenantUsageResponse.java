@@ -7,14 +7,19 @@ public class TenantUsageResponse {
   private long users;
   private long patients;
   private long visits;
+  private String adminEmail;
+  private String planType;
 
-  public TenantUsageResponse(Long id, String name, boolean active, long users, long patients, long visits) {
+  public TenantUsageResponse(Long id, String name, boolean active, long users, long patients, long visits,
+                             String adminEmail, String planType) {
     this.id = id;
     this.name = name;
     this.active = active;
     this.users = users;
     this.patients = patients;
     this.visits = visits;
+    this.adminEmail = adminEmail;
+    this.planType = planType;
   }
 
   public Long getId() { return id; }
@@ -23,4 +28,6 @@ public class TenantUsageResponse {
   public long getUsers() { return users; }
   public long getPatients() { return patients; }
   public long getVisits() { return visits; }
+  public String getAdminEmail() { return adminEmail; }
+  public String getPlanType() { return planType; }
 }

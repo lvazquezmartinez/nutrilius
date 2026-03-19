@@ -33,8 +33,12 @@ export default function PatientDetail() {
   const [selectedAnamnesis, setSelectedAnamnesis] = useState(null)
   const [editAnamnesisMode, setEditAnamnesisMode] = useState(false)
   const [selectedAnamnesisData, setSelectedAnamnesisData] = useState({})
-  const [settings, setSettings] = useState({ planEnabled: false })
+  const [settings, setSettings] = useState({ planType: 'BASIC' })
   const [planText, setPlanText] = useState('')
+  const [showPlanPdf, setShowPlanPdf] = useState(false)
+  const [planPdfUrl, setPlanPdfUrl] = useState('')
+  const [planNotes, setPlanNotes] = useState('')
+  const [isGeneratingPlan, setIsGeneratingPlan] = useState(false)
   const [tooltip, setTooltip] = useState({ visible: false, x: 0, y: 0, text: '', chartKey: null })
 
   const loadAll = () => {
@@ -158,6 +162,40 @@ export default function PatientDetail() {
     } catch (err) {
       setError(err?.response?.data?.error || 'Error guardando plan')
     }
+  }
+
+  const generatePlan = async () => {
+    setError('')
+    setIsGeneratingPlan(true)
+    try {
+      const res = await api.post(`/patients/${id}/plan/generate`, { notes: planNotes })
+      setPlanText(res.data?.contentText || '')
+    } catch (err) {
+      setError(err?.response?.data?.error || 'Error generando plan con IA')
+    } finally {
+      setIsGeneratingPlan(false)
+    }
+  }
+
+  const openPlanPdf = async () => {
+    setError('')
+    try {
+      const res = await api.get(`/patients/${id}/plan/pdf`, { responseType: 'blob' })
+      const blob = new Blob([res.data], { type: 'application/pdf' })
+      const url = window.URL.createObjectURL(blob)
+      setPlanPdfUrl(url)
+      setShowPlanPdf(true)
+    } catch (err) {
+      setError(err?.response?.data?.error || 'Error generando PDF')
+    }
+  }
+
+  const closePlanPdf = () => {
+    if (planPdfUrl) {
+      window.URL.revokeObjectURL(planPdfUrl)
+    }
+    setPlanPdfUrl('')
+    setShowPlanPdf(false)
   }
 
   const renderLineChart = (label, key, unit) => {
@@ -524,14 +562,37 @@ export default function PatientDetail() {
         </div>
       </div>
 
-      {settings.planEnabled && (
+      {['PRO', 'PREMIUM'].includes(settings.planType || 'BASIC') && (
         <div className="card">
           <div className="card-header bg-warning">Plan alimenticio</div>
           <div className="card-body">
+            <div className="mb-2">
+              <label className="form-label">Notas para la IA (opcional)</label>
+              <input className="form-control" value={planNotes} onChange={(e) => setPlanNotes(e.target.value)} placeholder="Ej: foco en colesterol, preferencia vegetariana..." />
+            </div>
             <textarea className="form-control" rows="8" value={planText} onChange={(e) => setPlanText(e.target.value)} placeholder="Escribí el plan alimenticio..."></textarea>
             <div className="d-flex gap-2 mt-2">
+              <button className="btn btn-outline-primary" onClick={generatePlan} disabled={isGeneratingPlan}>
+                {isGeneratingPlan ? 'Generando...' : 'Generar con IA'}
+              </button>
               <button className="btn btn-primary" onClick={savePlan}>Guardar</button>
-              <a className="btn btn-outline-secondary" href={`/patients/${id}/plan/pdf`} target="_blank" rel="noreferrer">Ver PDF</a>
+              <button className="btn btn-outline-secondary" onClick={openPlanPdf}>Ver PDF</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showPlanPdf && (
+        <div className="modal-backdrop" onClick={closePlanPdf}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()} style={{ width: '90%', height: '90%' }}>
+            <div className="modal-header">
+              <h5 className="mb-0">Plan alimenticio (PDF)</h5>
+              <button className="btn btn-sm btn-outline-secondary" onClick={closePlanPdf}>Cerrar</button>
+            </div>
+            <div className="modal-body" style={{ height: 'calc(100% - 60px)' }}>
+              {planPdfUrl && (
+                <iframe title="Plan PDF" src={planPdfUrl} style={{ width: '100%', height: '100%', border: 'none' }} />
+              )}
             </div>
           </div>
         </div>

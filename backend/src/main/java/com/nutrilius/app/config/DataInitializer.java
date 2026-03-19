@@ -19,6 +19,9 @@ public class DataInitializer implements CommandLineRunner {
   @Value("${app.seed.enabled}")
   private boolean seedEnabled;
 
+  @Value("${app.env:prod}")
+  private String appEnv;
+
   @Value("${app.seed.super-admin-email}")
   private String superAdminEmail;
 
@@ -48,7 +51,7 @@ public class DataInitializer implements CommandLineRunner {
 
   @Override
   public void run(String... args) {
-    if (!seedEnabled) {
+    if (!seedEnabled || !"dev".equalsIgnoreCase(appEnv)) {
       return;
     }
 

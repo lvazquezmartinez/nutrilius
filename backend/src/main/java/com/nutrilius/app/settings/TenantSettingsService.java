@@ -35,7 +35,7 @@ public class TenantSettingsService {
     if (request.getNutritionistName() != null) settings.setNutritionistName(request.getNutritionistName());
     if (request.getBusinessName() != null) settings.setBusinessName(request.getBusinessName());
     if (request.getLicenseNumber() != null) settings.setLicenseNumber(request.getLicenseNumber());
-    if (request.getPlanEnabled() != null) settings.setPlanEnabled(request.getPlanEnabled());
+    if (request.getPlanType() != null) settings.setPlanType(request.getPlanType());
     settings.setUpdatedAt(Instant.now());
     return new TenantSettingsResponse(repository.save(settings));
   }

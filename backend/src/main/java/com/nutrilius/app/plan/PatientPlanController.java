@@ -13,11 +13,13 @@ public class PatientPlanController {
   private final PatientPlanService service;
   private final PlanPdfService planPdfService;
   private final TenantSettingsService settingsService;
+  private final PlanAiService planAiService;
 
-  public PatientPlanController(PatientPlanService service, PlanPdfService planPdfService, TenantSettingsService settingsService) {
+  public PatientPlanController(PatientPlanService service, PlanPdfService planPdfService, TenantSettingsService settingsService, PlanAiService planAiService) {
     this.service = service;
     this.planPdfService = planPdfService;
     this.settingsService = settingsService;
+    this.planAiService = planAiService;
   }
 
   @GetMapping
@@ -32,10 +34,24 @@ public class PatientPlanController {
     return ResponseEntity.ok(service.upsert(patientId, request));
   }
 
+  @PostMapping("/generate")
+  @PreAuthorize("hasAnyRole('ADMIN','USER')")
+  public ResponseEntity<PatientPlanResponse> generate(@PathVariable Long patientId, @RequestBody PlanGenerateRequest request) {
+    String planType = settingsService.get().getPlanType();
+    if (planType == null || (!planType.equalsIgnoreCase("PRO") && !planType.equalsIgnoreCase("PREMIUM"))) {
+      return ResponseEntity.badRequest().build();
+    }
+    String content = planAiService.generate(patientId, request != null ? request.getNotes() : null);
+    PatientPlanRequest payload = new PatientPlanRequest();
+    payload.setContentText(content);
+    return ResponseEntity.ok(service.upsert(patientId, payload));
+  }
+
   @GetMapping(value = "/pdf", produces = MediaType.APPLICATION_PDF_VALUE)
   @PreAuthorize("hasAnyRole('ADMIN','USER')")
   public ResponseEntity<byte[]> pdf(@PathVariable Long patientId) throws Exception {
-    if (!settingsService.get().isPlanEnabled()) {
+    String planType = settingsService.get().getPlanType();
+    if (planType == null || (!planType.equalsIgnoreCase("PRO") && !planType.equalsIgnoreCase("PREMIUM"))) {
       return ResponseEntity.badRequest().build();
     }
     byte[] pdf = planPdfService.generate(patientId);

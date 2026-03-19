@@ -14,6 +14,8 @@ services:
   backend:
     build:
       context: ./backend
+    env_file:
+      - .env
     environment:
       DB_HOST: db
       DB_PORT: 3306
@@ -22,13 +24,7 @@ services:
       DB_PASSWORD: root
       JWT_SECRET: change-me-super-secret-32chars-minimum
       APP_CORS_ORIGINS: http://localhost:5173,http://localhost:8080
-      APP_SEED: "true"
-      APP_SUPER_ADMIN_EMAIL: super@nutrilius.local
-      APP_SUPER_ADMIN_PASSWORD: super123
-      APP_DEMO_ADMIN_EMAIL: admin@demo.local
-      APP_DEMO_ADMIN_PASSWORD: admin123
-      APP_DEMO_USER_EMAIL: user@demo.local
-      APP_DEMO_USER_PASSWORD: user123
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
     ports:
       - "8080:8080"
     depends_on:

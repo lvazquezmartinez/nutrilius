@@ -2,6 +2,8 @@ package com.nutrilius.app.settings;
 
 import com.nutrilius.app.tenant.Tenant;
 import jakarta.persistence.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import java.time.Instant;
 
 @Entity
@@ -18,13 +20,15 @@ public class TenantSettings {
   private String nutritionistName;
   private String businessName;
   private String licenseNumber;
-  private boolean planEnabled = false;
+  @Column(name = "plan_type")
+  private String planType;
 
   @Column(name = "logo_mime")
   private String logoMime;
 
   @Lob
-  @Column(name = "logo_blob")
+  @JdbcTypeCode(SqlTypes.LONGVARBINARY)
+  @Column(name = "logo_blob", columnDefinition = "LONGBLOB")
   private byte[] logoBlob;
 
   @Column(name = "updated_at", nullable = false)
@@ -39,8 +43,8 @@ public class TenantSettings {
   public void setBusinessName(String businessName) { this.businessName = businessName; }
   public String getLicenseNumber() { return licenseNumber; }
   public void setLicenseNumber(String licenseNumber) { this.licenseNumber = licenseNumber; }
-  public boolean isPlanEnabled() { return planEnabled; }
-  public void setPlanEnabled(boolean planEnabled) { this.planEnabled = planEnabled; }
+  public String getPlanType() { return planType; }
+  public void setPlanType(String planType) { this.planType = planType; }
   public String getLogoMime() { return logoMime; }
   public void setLogoMime(String logoMime) { this.logoMime = logoMime; }
   public byte[] getLogoBlob() { return logoBlob; }

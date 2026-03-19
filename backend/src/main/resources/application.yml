@@ -16,8 +16,21 @@ spring:
           preferred_enum_type: STRING
   flyway:
     enabled: true
+  mail:
+    host: ${MAIL_HOST:}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USER:}
+    password: ${MAIL_PASS:}
+    properties:
+      mail:
+        smtp:
+          auth: ${MAIL_AUTH:true}
+          starttls:
+            enable: ${MAIL_TLS:true}
 
 app:
+  env: ${APP_ENV:prod}
+  debug: ${APP_DEBUG:false}
   jwt:
     secret: ${JWT_SECRET:dev-secret-change-me-please-change-32chars}
     expiration-minutes: ${JWT_EXP_MINUTES:480}
@@ -30,7 +43,10 @@ app:
     demo-admin-password: ${APP_DEMO_ADMIN_PASSWORD:admin123}
     demo-user-email: ${APP_DEMO_USER_EMAIL:user@demo.local}
     demo-user-password: ${APP_DEMO_USER_PASSWORD:user123}
+  mail:
+    from: ${MAIL_FROM:no-reply@nutrilius.com}
 
 logging:
   level:
+    root: ${APP_LOG_LEVEL:INFO}
     org.springframework.security: INFO

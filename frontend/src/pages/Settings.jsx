@@ -8,7 +8,7 @@ export default function Settings() {
   const [insurances, setInsurances] = useState([])
   const [insuranceName, setInsuranceName] = useState('')
   const [templateJson, setTemplateJson] = useState('')
-  const [settings, setSettings] = useState({ nutritionistName: '', businessName: '', licenseNumber: '', planEnabled: false, hasLogo: false })
+  const [settings, setSettings] = useState({ nutritionistName: '', businessName: '', licenseNumber: '', planType: 'BASIC', hasLogo: false })
   const [error, setError] = useState('')
 
   useEffect(() => {
@@ -70,8 +70,7 @@ export default function Settings() {
       const res = await api.put('/settings', {
         nutritionistName: settings.nutritionistName,
         businessName: settings.businessName,
-        licenseNumber: settings.licenseNumber,
-        planEnabled: settings.planEnabled
+        licenseNumber: settings.licenseNumber
       })
       setSettings(res.data)
     } catch (err) {
@@ -128,12 +127,6 @@ export default function Settings() {
               <label className="form-label">Logo (marca de agua)</label>
               <input className="form-control" type="file" accept="image/*" onChange={uploadLogo} />
               {settings.hasLogo && <div className="text-muted small mt-1">Logo cargado</div>}
-            </div>
-            <div className="col-md-4 d-flex align-items-end">
-              <div className="form-check">
-                <input className="form-check-input" type="checkbox" checked={!!settings.planEnabled} onChange={(e) => setSettings({ ...settings, planEnabled: e.target.checked })} />
-                <label className="form-check-label">Habilitar plan alimenticio</label>
-              </div>
             </div>
             <div className="col-12">
               <button className="btn btn-primary" type="submit">Guardar</button>

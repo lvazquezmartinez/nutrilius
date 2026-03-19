@@ -1,5 +1,6 @@
 import React from 'react'
 import { Routes, Route, Navigate, NavLink, useNavigate } from 'react-router-dom'
+import Landing from './pages/Landing.jsx'
 import Login from './pages/Login.jsx'
 import Dashboard from './pages/Dashboard.jsx'
 import Patients from './pages/Patients.jsx'
@@ -60,6 +61,7 @@ const AppLayout = ({ children }) => {
 export default function App() {
   return (
     <Routes>
+      <Route path="/" element={<Landing />} />
       <Route path="/login" element={<Login />} />
       <Route
         path="/dashboard"
@@ -131,7 +133,7 @@ export default function App() {
           </PrivateRoute>
         }
       />
-      <Route path="*" element={<Navigate to="/dashboard" replace />} />
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   )
 }
