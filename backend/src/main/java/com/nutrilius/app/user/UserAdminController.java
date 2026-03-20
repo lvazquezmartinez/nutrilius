@@ -33,6 +33,12 @@ public class UserAdminController {
     return ResponseEntity.ok(service.resetPassword(id));
   }
 
+  @PostMapping("/{id}/send-reset")
+  @PreAuthorize("hasRole('ADMIN')")
+  public ResponseEntity<com.nutrilius.app.auth.RegisterResponse> sendReset(@PathVariable Long id) {
+    return ResponseEntity.ok(service.sendResetEmail(id));
+  }
+
   @PostMapping("/{id}/toggle")
   @PreAuthorize("hasRole('ADMIN')")
   public ResponseEntity<UserAdminResponse> toggle(@PathVariable Long id) {

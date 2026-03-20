@@ -1,9 +1,14 @@
 package com.nutrilius.app.user;
 
+import com.nutrilius.app.auth.RegisterResponse;
 import com.nutrilius.app.common.Role;
 import com.nutrilius.app.security.SecurityUtil;
 import com.nutrilius.app.security.UserPrincipal;
+import com.nutrilius.app.mail.MailService;
 import java.security.SecureRandom;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.UUID;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -13,11 +18,16 @@ import org.springframework.stereotype.Service;
 public class UserAdminService {
   private final UserRepository userRepository;
   private final PasswordEncoder passwordEncoder;
+  private final MailService mailService;
+  private final String publicUrl;
   private final SecureRandom random = new SecureRandom();
 
-  public UserAdminService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+  public UserAdminService(UserRepository userRepository, PasswordEncoder passwordEncoder, MailService mailService,
+                          @org.springframework.beans.factory.annotation.Value("${app.public-url}") String publicUrl) {
     this.userRepository = userRepository;
     this.passwordEncoder = passwordEncoder;
+    this.mailService = mailService;
+    this.publicUrl = publicUrl;
   }
 
   public List<UserAdminResponse> list() {
@@ -63,6 +73,24 @@ public class UserAdminService {
     user.setPasswordHash(passwordEncoder.encode(temp));
     userRepository.save(user);
     return new UserResetResponse(temp);
+  }
+
+  public RegisterResponse sendResetEmail(Long id) {
+    UserPrincipal current = SecurityUtil.currentUser();
+    User user = userRepository.findByTenantIdAndId(current.getTenantId(), id)
+        .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado"));
+    user.setResetToken(UUID.randomUUID().toString());
+    user.setResetExpires(Instant.now().plus(2, ChronoUnit.HOURS));
+    userRepository.save(user);
+
+    String link = publicUrl + "/reset-password?token=" + user.getResetToken();
+    String body = "Hola,\n\n"
+        + "El administrador solicitó un reinicio de contraseña. Usá este link:\n"
+        + link + "\n\n"
+        + "Este link vence en 2 horas.\n\n"
+        + "Equipo Nutrilius";
+    mailService.send(user.getEmail(), "Reiniciar contraseña", body);
+    return new RegisterResponse("Email enviado.");
   }
 
   private String generateTempPassword() {

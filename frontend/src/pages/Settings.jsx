@@ -15,7 +15,8 @@ export default function Settings() {
   const [tab, setTab] = useState(0)
   const [users, setUsers] = useState([])
   const [newUser, setNewUser] = useState({ email: '', password: '', role: 'USER' })
-  const [tempPassword, setTempPassword] = useState('')
+  const [planTemplates, setPlanTemplates] = useState([])
+  const [planTemplateForm, setPlanTemplateForm] = useState({ id: null, name: '', contentText: '' })
 
   useEffect(() => {
     if (user?.role !== 'ADMIN') return
@@ -30,6 +31,9 @@ export default function Settings() {
       .catch((err) => setError(err?.response?.data?.error || 'Error cargando configuración'))
     api.get('/users')
       .then((res) => setUsers(res.data))
+      .catch(() => {})
+    api.get('/plan-templates')
+      .then((res) => setPlanTemplates(res.data))
       .catch(() => {})
   }, [user?.role])
 
@@ -114,7 +118,6 @@ export default function Settings() {
   const createUser = async (e) => {
     e.preventDefault()
     setError('')
-    setTempPassword('')
     try {
       const res = await api.post('/users', newUser)
       setUsers([res.data, ...users])
@@ -137,10 +140,49 @@ export default function Settings() {
   const resetUserPassword = async (u) => {
     setError('')
     try {
-      const res = await api.post(`/users/${u.id}/reset-password`)
-      setTempPassword(res.data?.tempPassword || '')
+      await api.post(`/users/${u.id}/send-reset`)
     } catch (err) {
       setError(err?.response?.data?.error || 'Error reseteando clave')
+    }
+  }
+
+  const savePlanTemplate = async (e) => {
+    e.preventDefault()
+    setError('')
+    try {
+      if (planTemplateForm.id) {
+        const res = await api.put(`/plan-templates/${planTemplateForm.id}`, {
+          name: planTemplateForm.name,
+          contentText: planTemplateForm.contentText
+        })
+        setPlanTemplates(planTemplates.map((t) => (t.id === res.data.id ? res.data : t)))
+      } else {
+        const res = await api.post('/plan-templates', {
+          name: planTemplateForm.name,
+          contentText: planTemplateForm.contentText
+        })
+        setPlanTemplates([res.data, ...planTemplates])
+      }
+      setPlanTemplateForm({ id: null, name: '', contentText: '' })
+    } catch (err) {
+      setError(err?.response?.data?.error || 'Error guardando plantilla de plan')
+    }
+  }
+
+  const editPlanTemplate = (tpl) => {
+    setPlanTemplateForm({ id: tpl.id, name: tpl.name, contentText: tpl.contentText })
+  }
+
+  const deletePlanTemplate = async (tpl) => {
+    setError('')
+    try {
+      await api.delete(`/plan-templates/${tpl.id}`)
+      setPlanTemplates(planTemplates.filter((t) => t.id !== tpl.id))
+      if (planTemplateForm.id === tpl.id) {
+        setPlanTemplateForm({ id: null, name: '', contentText: '' })
+      }
+    } catch (err) {
+      setError(err?.response?.data?.error || 'Error eliminando plantilla')
     }
   }
 
@@ -225,14 +267,71 @@ export default function Settings() {
               </form>
             </div>
           </div>
+
+          <div className="card mt-4">
+            <div className="card-header">Plantillas de planes</div>
+            <div className="card-body">
+              <form onSubmit={savePlanTemplate} className="mb-3">
+                <div className="row g-2">
+                  <div className="col-md-4">
+                    <input
+                      className="form-control"
+                      placeholder="Nombre de la plantilla"
+                      value={planTemplateForm.name}
+                      onChange={(e) => setPlanTemplateForm({ ...planTemplateForm, name: e.target.value })}
+                    />
+                  </div>
+                  <div className="col-md-8">
+                    <textarea
+                      className="form-control"
+                      rows="3"
+                      placeholder="Contenido base del plan"
+                      value={planTemplateForm.contentText}
+                      onChange={(e) => setPlanTemplateForm({ ...planTemplateForm, contentText: e.target.value })}
+                    />
+                  </div>
+                </div>
+                <div className="mt-2 d-flex gap-2">
+                  <button className="btn btn-primary" type="submit">
+                    {planTemplateForm.id ? 'Actualizar plantilla' : 'Guardar plantilla'}
+                  </button>
+                  {planTemplateForm.id && (
+                    <button className="btn btn-outline-secondary" type="button" onClick={() => setPlanTemplateForm({ id: null, name: '', contentText: '' })}>
+                      Cancelar
+                    </button>
+                  )}
+                </div>
+              </form>
+              <div className="table-responsive">
+                <table className="table">
+                  <thead>
+                    <tr>
+                      <th>Nombre</th>
+                      <th>Contenido</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {planTemplates.map((tpl) => (
+                      <tr key={tpl.id}>
+                        <td>{tpl.name}</td>
+                        <td className="text-truncate" style={{ maxWidth: 320 }}>{tpl.contentText}</td>
+                        <td className="d-flex gap-2">
+                          <button className="btn btn-outline-secondary btn-sm" onClick={() => editPlanTemplate(tpl)}>Editar</button>
+                          <button className="btn btn-outline-danger btn-sm" onClick={() => deletePlanTemplate(tpl)}>Eliminar</button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
         </>
       )}
 
       {tab === 1 && (
         <>
-          {tempPassword && (
-            <div className="alert alert-warning">Clave temporal: <strong>{tempPassword}</strong></div>
-          )}
           <div className="card">
             <div className="card-header">Crear usuario</div>
             <div className="card-body">
@@ -276,7 +375,7 @@ export default function Settings() {
                         <td>{u.role}</td>
                         <td>{u.active ? 'Activo' : 'Inactivo'}</td>
                         <td className="d-flex gap-2">
-                          <button className="btn btn-outline-secondary btn-sm" onClick={() => resetUserPassword(u)}>Reset clave</button>
+                          <button className="btn btn-outline-secondary btn-sm" onClick={() => resetUserPassword(u)}>Enviar reset</button>
                           <button className="btn btn-outline-danger btn-sm" onClick={() => toggleUser(u)}>
                             {u.active ? 'Desactivar' : 'Activar'}
                           </button>
