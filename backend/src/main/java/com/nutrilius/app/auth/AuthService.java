@@ -26,12 +26,14 @@ public class AuthService {
   private final JwtService jwtService;
   private final MailService mailService;
   private final String publicUrl;
+  private final String apiUrl;
 
   public AuthService(UserRepository userRepository, TenantRepository tenantRepository,
                      TenantSettingsRepository tenantSettingsRepository,
                      PasswordEncoder passwordEncoder, JwtService jwtService,
                      MailService mailService,
-                     @org.springframework.beans.factory.annotation.Value("${app.public-url}") String publicUrl) {
+                     @org.springframework.beans.factory.annotation.Value("${app.public-url}") String publicUrl,
+                     @org.springframework.beans.factory.annotation.Value("${app.api-url}") String apiUrl) {
     this.userRepository = userRepository;
     this.tenantRepository = tenantRepository;
     this.tenantSettingsRepository = tenantSettingsRepository;
@@ -39,6 +41,7 @@ public class AuthService {
     this.jwtService = jwtService;
     this.mailService = mailService;
     this.publicUrl = publicUrl;
+    this.apiUrl = apiUrl;
   }
 
   public LoginResponse login(LoginRequest request) {
@@ -87,7 +90,7 @@ public class AuthService {
     admin.setTenant(tenant);
     admin = userRepository.save(admin);
 
-    String link = publicUrl + "/confirm?token=" + admin.getVerificationToken();
+    String link = apiUrl + "/auth/confirm?token=" + admin.getVerificationToken();
     String body = "Hola " + request.getNutritionistName() + ",\n\n"
         + "Confirmá tu email para activar tu cuenta:\n"
         + link + "\n\n"
