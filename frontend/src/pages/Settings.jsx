@@ -376,7 +376,7 @@ export default function Settings() {
                         <td>{u.active ? 'Activo' : 'Inactivo'}</td>
                         <td className="d-flex gap-2">
                           <button className="btn btn-outline-secondary btn-sm" onClick={() => resetUserPassword(u)}>Enviar reset</button>
-                          <button className="btn btn-outline-danger btn-sm" onClick={() => toggleUser(u)}>
+                          <button className="btn btn-outline-danger btn-sm" onClick={() => toggleUser(u)} disabled={u.role === 'ADMIN'}>
                             {u.active ? 'Desactivar' : 'Activar'}
                           </button>
                         </td>

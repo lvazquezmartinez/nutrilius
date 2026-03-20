@@ -61,6 +61,9 @@ public class UserAdminService {
     UserPrincipal current = SecurityUtil.currentUser();
     User user = userRepository.findByTenantIdAndId(current.getTenantId(), id)
         .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado"));
+    if (user.getRole() == Role.ADMIN) {
+      throw new IllegalArgumentException("No se puede desactivar un administrador");
+    }
     user.setActive(!user.isActive());
     return new UserAdminResponse(userRepository.save(user));
   }
