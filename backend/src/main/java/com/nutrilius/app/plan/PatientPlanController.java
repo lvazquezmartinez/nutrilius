@@ -1,7 +1,13 @@
 package com.nutrilius.app.plan;
 
+import com.nutrilius.app.security.SecurityUtil;
+import com.nutrilius.app.security.UserPrincipal;
 import com.nutrilius.app.settings.TenantSettingsService;
 import jakarta.validation.Valid;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -14,12 +20,18 @@ public class PatientPlanController {
   private final PlanPdfService planPdfService;
   private final TenantSettingsService settingsService;
   private final PlanAiService planAiService;
+  private final PatientPlanRepository planRepository;
+  private final String apiUrl;
 
-  public PatientPlanController(PatientPlanService service, PlanPdfService planPdfService, TenantSettingsService settingsService, PlanAiService planAiService) {
+  public PatientPlanController(PatientPlanService service, PlanPdfService planPdfService, TenantSettingsService settingsService,
+                               PlanAiService planAiService, PatientPlanRepository planRepository,
+                               @Value("${app.api-url:http://localhost:8080}") String apiUrl) {
     this.service = service;
     this.planPdfService = planPdfService;
     this.settingsService = settingsService;
     this.planAiService = planAiService;
+    this.planRepository = planRepository;
+    this.apiUrl = apiUrl;
   }
 
   @GetMapping
@@ -58,5 +70,23 @@ public class PatientPlanController {
     return ResponseEntity.ok()
         .contentType(MediaType.APPLICATION_PDF)
         .body(pdf);
+  }
+
+  @PostMapping("/share")
+  @PreAuthorize("hasAnyRole('ADMIN','USER')")
+  public ResponseEntity<Map<String, String>> share(@PathVariable Long patientId) {
+    UserPrincipal current = SecurityUtil.currentUser();
+    PatientPlan plan = planRepository.findByTenantIdAndPatientId(current.getTenantId(), patientId)
+        .orElseThrow(() -> new IllegalArgumentException("Plan no encontrado"));
+    if (plan.getShareToken() == null || plan.getShareToken().isBlank()) {
+      plan.setShareToken(UUID.randomUUID().toString());
+    }
+    plan.setShareEnabled(true);
+    planRepository.save(plan);
+
+    String url = apiUrl + "/public/plan/" + plan.getShareToken() + "/pdf";
+    Map<String, String> response = new HashMap<>();
+    response.put("url", url);
+    return ResponseEntity.ok(response);
   }
 }

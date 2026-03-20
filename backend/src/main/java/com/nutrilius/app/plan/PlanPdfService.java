@@ -3,7 +3,7 @@ package com.nutrilius.app.plan;
 import com.nutrilius.app.patient.Patient;
 import com.nutrilius.app.patient.PatientService;
 import com.nutrilius.app.settings.TenantSettings;
-import com.nutrilius.app.settings.TenantSettingsService;
+import com.nutrilius.app.settings.TenantSettingsRepository;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.util.Arrays;
@@ -20,19 +20,25 @@ import org.springframework.stereotype.Service;
 public class PlanPdfService {
   private final PatientPlanService planService;
   private final PatientService patientService;
-  private final TenantSettingsService settingsService;
+  private final TenantSettingsRepository settingsRepository;
 
-  public PlanPdfService(PatientPlanService planService, PatientService patientService, TenantSettingsService settingsService) {
+  public PlanPdfService(PatientPlanService planService, PatientService patientService, TenantSettingsRepository settingsRepository) {
     this.planService = planService;
     this.patientService = patientService;
-    this.settingsService = settingsService;
+    this.settingsRepository = settingsRepository;
   }
 
   public byte[] generate(Long patientId) throws Exception {
     PatientPlanResponse plan = planService.get(patientId);
     Patient patient = patientService.getPatientForTenant(patientId);
-    TenantSettings settings = settingsService.getOrCreate();
+    TenantSettings settings = settingsRepository.findByTenantId(patient.getTenant().getId()).orElse(null);
+    if (settings == null) {
+      settings = new TenantSettings();
+    }
+    return generateForPlan(plan != null ? plan.getContentText() : "", patient, settings);
+  }
 
+  public byte[] generateForPlan(String contentText, Patient patient, TenantSettings settings) throws Exception {
     try (PDDocument doc = new PDDocument(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
       PDPage page = new PDPage(PDRectangle.A4);
       doc.addPage(page);
@@ -84,7 +90,7 @@ public class PlanPdfService {
         y -= 24;
 
         // Content
-        String content = plan != null ? plan.getContentText() : "";
+        String content = contentText != null ? contentText : "";
         cs.setFont(PDType1Font.HELVETICA, 11);
         for (String line : content.split("\\r?\\n")) {
           if (y < margin) {

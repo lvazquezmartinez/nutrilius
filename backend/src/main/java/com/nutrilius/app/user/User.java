@@ -41,6 +41,12 @@ public class User {
   @Column(name = "verification_expires")
   private Instant verificationExpires;
 
+  @Column(name = "reset_token")
+  private String resetToken;
+
+  @Column(name = "reset_expires")
+  private Instant resetExpires;
+
   @Column(name = "created_at", nullable = false, updatable = false)
   private Instant createdAt = Instant.now();
 
@@ -110,6 +116,22 @@ public class User {
 
   public void setVerificationExpires(Instant verificationExpires) {
     this.verificationExpires = verificationExpires;
+  }
+
+  public String getResetToken() {
+    return resetToken;
+  }
+
+  public void setResetToken(String resetToken) {
+    this.resetToken = resetToken;
+  }
+
+  public Instant getResetExpires() {
+    return resetExpires;
+  }
+
+  public void setResetExpires(Instant resetExpires) {
+    this.resetExpires = resetExpires;
   }
 
   public Instant getCreatedAt() {

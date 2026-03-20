@@ -26,6 +26,16 @@ public class AuthController {
     return ResponseEntity.ok(authService.register(request));
   }
 
+  @PostMapping("/request-reset")
+  public ResponseEntity<RegisterResponse> requestReset(@Valid @RequestBody PasswordResetRequest request) {
+    return ResponseEntity.ok(authService.requestPasswordReset(request));
+  }
+
+  @PostMapping("/reset")
+  public ResponseEntity<RegisterResponse> reset(@Valid @RequestBody PasswordResetConfirmRequest request) {
+    return ResponseEntity.ok(authService.resetPassword(request));
+  }
+
   @GetMapping("/confirm")
   public RedirectView confirm(@RequestParam("token") String token) {
     return authService.confirm(token);

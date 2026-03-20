@@ -137,4 +137,38 @@ public class AuthService {
     String trimmed = value.trim();
     return trimmed.isEmpty() ? null : trimmed;
   }
+
+  public RegisterResponse requestPasswordReset(PasswordResetRequest request) {
+    User user = userRepository.findByEmail(request.getEmail()).orElse(null);
+    if (user == null) {
+      return new RegisterResponse("Si el correo existe, enviamos un link para recuperar la clave.");
+    }
+    user.setResetToken(UUID.randomUUID().toString());
+    user.setResetExpires(Instant.now().plus(2, ChronoUnit.HOURS));
+    userRepository.save(user);
+
+    String link = publicUrl + "/reset-password?token=" + user.getResetToken();
+    String body = "Hola,\n\n"
+        + "Para recuperar tu contraseña ingresá al siguiente link:\n"
+        + link + "\n\n"
+        + "Este link vence en 2 horas.\n\n"
+        + "Equipo Nutrilius";
+    mailService.send(user.getEmail(), "Recuperar contraseña", body);
+    return new RegisterResponse("Si el correo existe, enviamos un link para recuperar la clave.");
+  }
+
+  public RegisterResponse resetPassword(PasswordResetConfirmRequest request) {
+    User user = userRepository.findByResetToken(request.getToken()).orElse(null);
+    if (user == null) {
+      throw new IllegalArgumentException("Token inválido");
+    }
+    if (user.getResetExpires() != null && user.getResetExpires().isBefore(Instant.now())) {
+      throw new IllegalArgumentException("El token expiró");
+    }
+    user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
+    user.setResetToken(null);
+    user.setResetExpires(null);
+    userRepository.save(user);
+    return new RegisterResponse("Contraseña actualizada. Ya podés ingresar.");
+  }
 }

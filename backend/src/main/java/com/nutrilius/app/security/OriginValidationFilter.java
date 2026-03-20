@@ -38,6 +38,7 @@ public class OriginValidationFilter extends OncePerRequestFilter {
     if (debugEnabled
         || "OPTIONS".equalsIgnoreCase(request.getMethod())
         || "/auth/confirm".equals(path)
+        || path.startsWith("/public/plan/")
         || "/actuator/health".equals(path)) {
       filterChain.doFilter(request, response);
       return;

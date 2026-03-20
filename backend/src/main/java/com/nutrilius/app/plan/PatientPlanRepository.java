@@ -5,4 +5,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface PatientPlanRepository extends JpaRepository<PatientPlan, Long> {
   Optional<PatientPlan> findByTenantIdAndPatientId(Long tenantId, Long patientId);
+  Optional<PatientPlan> findByShareToken(String shareToken);
 }

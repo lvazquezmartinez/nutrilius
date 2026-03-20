@@ -27,7 +27,15 @@ public class SecurityConfig {
     http.csrf(csrf -> csrf.disable())
         .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .authorizeHttpRequests(auth -> auth
-            .requestMatchers("/auth/login", "/auth/register", "/auth/confirm", "/actuator/health").permitAll()
+            .requestMatchers(
+                "/auth/login",
+                "/auth/register",
+                "/auth/confirm",
+                "/auth/request-reset",
+                "/auth/reset",
+                "/public/plan/**",
+                "/actuator/health"
+            ).permitAll()
             .anyRequest().authenticated())
         .addFilterBefore(originValidationFilter, UsernamePasswordAuthenticationFilter.class)
         .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);

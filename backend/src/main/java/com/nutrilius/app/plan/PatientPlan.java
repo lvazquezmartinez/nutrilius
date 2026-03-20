@@ -31,6 +31,12 @@ public class PatientPlan {
   @Column(name = "updated_at", nullable = false)
   private Instant updatedAt = Instant.now();
 
+  @Column(name = "share_token")
+  private String shareToken;
+
+  @Column(name = "share_enabled", nullable = false)
+  private boolean shareEnabled = false;
+
   public Long getId() { return id; }
   public Tenant getTenant() { return tenant; }
   public void setTenant(Tenant tenant) { this.tenant = tenant; }
@@ -42,4 +48,8 @@ public class PatientPlan {
   public void setContentText(String contentText) { this.contentText = contentText; }
   public Instant getUpdatedAt() { return updatedAt; }
   public void setUpdatedAt(Instant updatedAt) { this.updatedAt = updatedAt; }
+  public String getShareToken() { return shareToken; }
+  public void setShareToken(String shareToken) { this.shareToken = shareToken; }
+  public boolean isShareEnabled() { return shareEnabled; }
+  public void setShareEnabled(boolean shareEnabled) { this.shareEnabled = shareEnabled; }
 }

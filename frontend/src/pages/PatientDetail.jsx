@@ -39,6 +39,10 @@ export default function PatientDetail() {
   const [planPdfUrl, setPlanPdfUrl] = useState('')
   const [planNotes, setPlanNotes] = useState('')
   const [isGeneratingPlan, setIsGeneratingPlan] = useState(false)
+  const [planTemplates, setPlanTemplates] = useState([])
+  const [selectedTemplateId, setSelectedTemplateId] = useState('')
+  const [templateName, setTemplateName] = useState('')
+  const [shareUrl, setShareUrl] = useState('')
   const [tooltip, setTooltip] = useState({ visible: false, x: 0, y: 0, text: '', chartKey: null })
 
   const loadAll = () => {
@@ -55,6 +59,7 @@ export default function PatientDetail() {
     api.get(`/patients/${id}/plan`).then((res) => {
       if (res.data) setPlanText(res.data.contentText || '')
     }).catch(() => {})
+    api.get('/plan-templates').then((res) => setPlanTemplates(res.data)).catch(() => {})
   }
 
   useEffect(() => {
@@ -187,6 +192,43 @@ export default function PatientDetail() {
       setShowPlanPdf(true)
     } catch (err) {
       setError(err?.response?.data?.error || 'Error generando PDF')
+    }
+  }
+
+  const applyTemplate = () => {
+    const tpl = planTemplates.find((t) => String(t.id) === String(selectedTemplateId))
+    if (tpl) {
+      setPlanText(tpl.contentText || '')
+    }
+  }
+
+  const saveTemplate = async () => {
+    setError('')
+    if (!templateName.trim()) {
+      setError('Ingresá un nombre para la plantilla')
+      return
+    }
+    try {
+      const res = await api.post('/plan-templates', {
+        name: templateName.trim(),
+        contentText: planText || ''
+      })
+      setTemplateName('')
+      const next = [res.data, ...planTemplates]
+      setPlanTemplates(next)
+      setSelectedTemplateId(String(res.data.id))
+    } catch (err) {
+      setError(err?.response?.data?.error || 'Error guardando plantilla')
+    }
+  }
+
+  const generateShareLink = async () => {
+    setError('')
+    try {
+      const res = await api.post(`/patients/${id}/plan/share`)
+      setShareUrl(res.data?.url || '')
+    } catch (err) {
+      setError(err?.response?.data?.error || 'Error generando link')
     }
   }
 
@@ -566,6 +608,34 @@ export default function PatientDetail() {
         <div className="card">
           <div className="card-header bg-warning">Plan alimenticio</div>
           <div className="card-body">
+            <div className="row g-2 mb-2">
+              <div className="col-md-6">
+                <label className="form-label">Plantillas</label>
+                <select className="form-select" value={selectedTemplateId} onChange={(e) => setSelectedTemplateId(e.target.value)}>
+                  <option value="">Seleccionar plantilla</option>
+                  {planTemplates.map((tpl) => (
+                    <option key={tpl.id} value={tpl.id}>{tpl.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="col-md-3 d-flex align-items-end">
+                <button className="btn btn-outline-secondary w-100" type="button" onClick={applyTemplate} disabled={!selectedTemplateId}>
+                  Usar plantilla
+                </button>
+              </div>
+            </div>
+            {user?.role === 'ADMIN' && (
+              <div className="row g-2 mb-3">
+                <div className="col-md-9">
+                  <input className="form-control" placeholder="Guardar como..." value={templateName} onChange={(e) => setTemplateName(e.target.value)} />
+                </div>
+                <div className="col-md-3">
+                  <button className="btn btn-outline-primary w-100" type="button" onClick={saveTemplate}>
+                    Guardar plantilla
+                  </button>
+                </div>
+              </div>
+            )}
             <div className="mb-2">
               <label className="form-label">Notas para la IA (opcional)</label>
               <input className="form-control" value={planNotes} onChange={(e) => setPlanNotes(e.target.value)} placeholder="Ej: foco en colesterol, preferencia vegetariana..." />
@@ -577,7 +647,22 @@ export default function PatientDetail() {
               </button>
               <button className="btn btn-primary" onClick={savePlan}>Guardar</button>
               <button className="btn btn-outline-secondary" onClick={openPlanPdf}>Ver PDF</button>
+              <button className="btn btn-outline-dark" onClick={generateShareLink}>Compartir link</button>
             </div>
+            {shareUrl && (
+              <div className="mt-3">
+                <label className="form-label">Link público</label>
+                <div className="d-flex gap-2">
+                  <input className="form-control" value={shareUrl} readOnly />
+                  <button
+                    className="btn btn-outline-secondary"
+                    onClick={() => navigator.clipboard.writeText(shareUrl)}
+                  >
+                    Copiar
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

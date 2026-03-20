@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 import api from '../api/client'
 
 export default function Login() {
@@ -65,6 +65,9 @@ export default function Login() {
             </div>
             <button className="btn btn-primary" type="submit">Entrar</button>
           </form>
+          <div className="mt-3">
+            <Link to="/forgot-password">¿Olvidaste tu contraseña?</Link>
+          </div>
         </div>
       </div>
       {showConfirmModal && (
