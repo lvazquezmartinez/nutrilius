@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import api from '../api/client'
 
@@ -8,7 +8,17 @@ export default function Login() {
   const [error, setError] = useState('')
   const navigate = useNavigate()
   const location = useLocation()
-  const confirmed = useMemo(() => new URLSearchParams(location.search).get('confirmed') === '1', [location.search])
+  const confirmedParam = useMemo(() => new URLSearchParams(location.search).get('confirmed'), [location.search])
+  const reasonParam = useMemo(() => new URLSearchParams(location.search).get('reason'), [location.search])
+  const [showConfirmModal, setShowConfirmModal] = useState(false)
+
+  useEffect(() => {
+    if (confirmedParam === '1' || confirmedParam === '0') {
+      const timer = setTimeout(() => setShowConfirmModal(true), 15000)
+      return () => clearTimeout(timer)
+    }
+    return undefined
+  }, [confirmedParam])
 
   const submit = async (e) => {
     e.preventDefault()
@@ -33,7 +43,16 @@ export default function Login() {
       <div className="card shadow-sm">
         <div className="card-body">
           <h3 className="mb-3">Ingreso</h3>
-          {confirmed && <div className="alert alert-success">Email confirmado. Ya podés ingresar.</div>}
+          {confirmedParam === '1' && (
+            <div className="alert alert-success">Email confirmado. Ya podés ingresar.</div>
+          )}
+          {confirmedParam === '0' && (
+            <div className="alert alert-danger">
+              {reasonParam === 'expired'
+                ? 'El token expiró. Solicitá un nuevo mail de confirmación.'
+                : 'No se pudo validar el email. Intentá de nuevo.'}
+            </div>
+          )}
           {error && <div className="alert alert-danger">{error}</div>}
           <form onSubmit={submit}>
             <div className="mb-3">
@@ -48,6 +67,27 @@ export default function Login() {
           </form>
         </div>
       </div>
+      {showConfirmModal && (
+        <div className="modal-backdrop" onClick={() => setShowConfirmModal(false)}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h5 className="modal-title">Validación de email</h5>
+              <button className="btn btn-sm btn-outline-secondary" onClick={() => setShowConfirmModal(false)}>Cerrar</button>
+            </div>
+            <div className="modal-body">
+              {confirmedParam === '1' ? (
+                <div className="alert alert-success mb-0">Su mail fue validado con éxito.</div>
+              ) : (
+                <div className="alert alert-danger mb-0">
+                  {reasonParam === 'expired'
+                    ? 'El token expiró. Solicitá un nuevo mail de confirmación.'
+                    : 'Falló la validación del mail. Token inválido.'}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

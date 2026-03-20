@@ -102,16 +102,17 @@ public class AuthService {
   }
 
   public RedirectView confirm(String token) {
-    User user = userRepository.findByVerificationToken(token)
-        .orElseThrow(() -> new IllegalArgumentException("Token inválido"));
+    User user = userRepository.findByVerificationToken(token).orElse(null);
+    if (user == null) {
+      return new RedirectView(publicUrl + "/login?confirmed=0&reason=invalid");
+    }
     if (user.getVerificationExpires() != null && user.getVerificationExpires().isBefore(Instant.now())) {
-      throw new IllegalArgumentException("El token expiró");
+      return new RedirectView(publicUrl + "/login?confirmed=0&reason=expired");
     }
     user.setEmailVerified(true);
     user.setVerificationToken(null);
     user.setVerificationExpires(null);
     userRepository.save(user);
-
     return new RedirectView(publicUrl + "/login?confirmed=1");
   }
 

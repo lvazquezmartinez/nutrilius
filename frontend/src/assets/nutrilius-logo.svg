@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="700" height="180" viewBox="0 0 700 180" role="img" aria-label="Nutrilius">
+  <defs>
+    <style>
+      .wordmark {
+        font-family: "Space Grotesk", "Nunito", "Arial Rounded MT Bold", Arial, sans-serif;
+        font-size: 120px;
+        font-weight: 700;
+        letter-spacing: -1px;
+        fill: #0f172a;
+      }
+    </style>
+  </defs>
+  <text x="20" y="125" class="wordmark">Nutrilius</text>
+  <!-- puntos violetas sobre las i -->
+  <circle cx="305" cy="40" r="9" fill="#7c3aed"/>
+  <circle cx="405" cy="40" r="9" fill="#7c3aed"/>
+</svg>

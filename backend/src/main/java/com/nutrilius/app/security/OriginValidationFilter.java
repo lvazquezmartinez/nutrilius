@@ -34,7 +34,11 @@ public class OriginValidationFilter extends OncePerRequestFilter {
   @Override
   protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
       throws ServletException, IOException {
-    if (debugEnabled || "OPTIONS".equalsIgnoreCase(request.getMethod())) {
+    String path = request.getRequestURI();
+    if (debugEnabled
+        || "OPTIONS".equalsIgnoreCase(request.getMethod())
+        || "/auth/confirm".equals(path)
+        || "/actuator/health".equals(path)) {
       filterChain.doFilter(request, response);
       return;
     }
