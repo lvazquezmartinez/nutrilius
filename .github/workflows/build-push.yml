@@ -30,7 +30,7 @@ jobs:
         with:
           context: ./backend
           push: true
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/amd64
           tags: |
             lichori/nutrilius-backend:latest
             lichori/nutrilius-backend:${{ github.sha }}
@@ -40,7 +40,7 @@ jobs:
         with:
           context: ./frontend
           push: true
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/amd64
           build-args: |
             VITE_API_URL=https://api.nutrilius.com.ar
           tags: |
