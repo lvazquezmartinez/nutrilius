@@ -3,17 +3,18 @@ import api from '../api/client'
 import BackButton from '../components/BackButton.jsx'
 
 export default function SuperAdmin() {
-  const user = JSON.parse(localStorage.getItem('user') || 'null')
+  const user = React.useMemo(() => JSON.parse(localStorage.getItem('user') || 'null'), [])
   const [tenants, setTenants] = useState([])
   const [error, setError] = useState('')
   const [passwords, setPasswords] = useState({})
+  const [confirmTenant, setConfirmTenant] = useState(null)
 
   useEffect(() => {
     if (user?.role !== 'SUPER_ADMIN') return
     api.get('/super/tenants')
       .then((res) => setTenants(res.data))
       .catch((err) => setError(err?.response?.data?.error || 'Error cargando tenants'))
-  }, [user])
+  }, [user?.role])
 
   if (user?.role !== 'SUPER_ADMIN') {
     return <div className="alert alert-info">Acceso solo para super admin.</div>
@@ -34,9 +35,12 @@ export default function SuperAdmin() {
                 <th>Admin</th>
                 <th>Tipo</th>
                 <th>Activa</th>
+                <th>Alta</th>
+                <th>Baja</th>
                 <th>Usuarios</th>
                 <th>Pacientes</th>
                 <th>Visitas</th>
+                <th>Acciones</th>
                 <th>Reset clave</th>
               </tr>
             </thead>
@@ -65,9 +69,16 @@ export default function SuperAdmin() {
                     </select>
                   </td>
                   <td>{t.active ? 'Si' : 'No'}</td>
+                  <td>{t.createdAt ? new Date(t.createdAt).toLocaleDateString() : '-'}</td>
+                  <td>{t.deactivatedAt ? new Date(t.deactivatedAt).toLocaleDateString() : '-'}</td>
                   <td>{t.users}</td>
                   <td>{t.patients}</td>
                   <td>{t.visits}</td>
+                  <td>
+                    <button className="btn btn-sm btn-outline-danger" onClick={() => setConfirmTenant(t)}>
+                      {t.active ? 'Dar de baja' : 'Reactivar'}
+                    </button>
+                  </td>
                   <td>
                     <div className="d-flex gap-2">
                       <input
@@ -102,6 +113,36 @@ export default function SuperAdmin() {
           </table>
         </div>
       </div>
+      {confirmTenant && (
+        <div className="modal-backdrop" onClick={() => setConfirmTenant(null)}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h5 className="modal-title">Confirmación</h5>
+              <button className="btn btn-sm btn-outline-secondary" onClick={() => setConfirmTenant(null)}>Cerrar</button>
+            </div>
+            <div className="modal-body">
+              ¿Seguro que querés {confirmTenant.active ? 'dar de baja' : 'reactivar'} el tenant <strong>{confirmTenant.name}</strong>?
+            </div>
+            <div className="modal-footer">
+              <button className="btn btn-outline-secondary" onClick={() => setConfirmTenant(null)}>Cancelar</button>
+              <button
+                className="btn btn-danger"
+                onClick={async () => {
+                  try {
+                    const res = await api.post(`/super/tenants/${confirmTenant.id}/toggle`)
+                    setTenants((prev) => prev.map((x) => (x.id === confirmTenant.id ? res.data : x)))
+                    setConfirmTenant(null)
+                  } catch (err) {
+                    setError(err?.response?.data?.error || 'Error actualizando tenant')
+                  }
+                }}
+              >
+                Confirmar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

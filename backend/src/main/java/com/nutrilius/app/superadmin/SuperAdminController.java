@@ -39,4 +39,10 @@ public class SuperAdminController {
   public ResponseEntity<TenantUsageResponse> updatePlan(@PathVariable Long tenantId, @RequestBody UpdatePlanRequest request) {
     return ResponseEntity.ok(superAdminService.updatePlan(tenantId, request.getPlanType()));
   }
+
+  @PostMapping("/tenants/{tenantId}/toggle")
+  @PreAuthorize("hasRole('SUPER_ADMIN')")
+  public ResponseEntity<TenantUsageResponse> toggleTenant(@PathVariable Long tenantId) {
+    return ResponseEntity.ok(superAdminService.toggleTenant(tenantId));
+  }
 }

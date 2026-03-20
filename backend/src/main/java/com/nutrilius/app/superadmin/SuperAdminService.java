@@ -50,7 +50,18 @@ public class SuperAdminService {
           .map(User::getEmail).orElse(null);
       TenantSettings settings = settingsRepository.findByTenantId(t.getId()).orElse(null);
       String planType = settings != null ? settings.getPlanType() : null;
-      return new TenantUsageResponse(t.getId(), t.getName(), t.isActive(), users, patients, visits, adminEmail, planType);
+      return new TenantUsageResponse(
+          t.getId(),
+          t.getName(),
+          t.isActive(),
+          users,
+          patients,
+          visits,
+          adminEmail,
+          planType,
+          t.getCreatedAt(),
+          t.getDeactivatedAt()
+      );
     }).collect(Collectors.toList());
   }
 
@@ -72,6 +83,15 @@ public class SuperAdminService {
     if (planType != null) settings.setPlanType(planType);
     settings.setUpdatedAt(Instant.now());
     settingsRepository.save(settings);
+    return listTenants().stream().filter(t -> t.getId().equals(tenantId)).findFirst().orElse(null);
+  }
+
+  public TenantUsageResponse toggleTenant(Long tenantId) {
+    Tenant tenant = tenantRepository.findById(tenantId).orElseThrow();
+    boolean nextActive = !tenant.isActive();
+    tenant.setActive(nextActive);
+    tenant.setDeactivatedAt(nextActive ? null : Instant.now());
+    tenantRepository.save(tenant);
     return listTenants().stream().filter(t -> t.getId().equals(tenantId)).findFirst().orElse(null);
   }
 }

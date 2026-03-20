@@ -19,6 +19,9 @@ public class Tenant {
   @Column(name = "created_at", nullable = false, updatable = false)
   private Instant createdAt = Instant.now();
 
+  @Column(name = "deactivated_at")
+  private Instant deactivatedAt;
+
   public Long getId() {
     return id;
   }
@@ -41,5 +44,13 @@ public class Tenant {
 
   public Instant getCreatedAt() {
     return createdAt;
+  }
+
+  public Instant getDeactivatedAt() {
+    return deactivatedAt;
+  }
+
+  public void setDeactivatedAt(Instant deactivatedAt) {
+    this.deactivatedAt = deactivatedAt;
   }
 }

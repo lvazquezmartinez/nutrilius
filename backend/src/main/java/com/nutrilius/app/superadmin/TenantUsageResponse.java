@@ -9,9 +9,11 @@ public class TenantUsageResponse {
   private long visits;
   private String adminEmail;
   private String planType;
+  private java.time.Instant createdAt;
+  private java.time.Instant deactivatedAt;
 
   public TenantUsageResponse(Long id, String name, boolean active, long users, long patients, long visits,
-                             String adminEmail, String planType) {
+                             String adminEmail, String planType, java.time.Instant createdAt, java.time.Instant deactivatedAt) {
     this.id = id;
     this.name = name;
     this.active = active;
@@ -20,6 +22,8 @@ public class TenantUsageResponse {
     this.visits = visits;
     this.adminEmail = adminEmail;
     this.planType = planType;
+    this.createdAt = createdAt;
+    this.deactivatedAt = deactivatedAt;
   }
 
   public Long getId() { return id; }
@@ -30,4 +34,6 @@ public class TenantUsageResponse {
   public long getVisits() { return visits; }
   public String getAdminEmail() { return adminEmail; }
   public String getPlanType() { return planType; }
+  public java.time.Instant getCreatedAt() { return createdAt; }
+  public java.time.Instant getDeactivatedAt() { return deactivatedAt; }
 }
