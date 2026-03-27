@@ -8,6 +8,8 @@ import com.nutrilius.app.user.User;
 import com.nutrilius.app.user.UserRepository;
 import jakarta.persistence.EntityManager;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -63,6 +65,61 @@ public class SuperAdminService {
           t.getDeactivatedAt()
       );
     }).collect(Collectors.toList());
+  }
+
+  public SuperAdminAnalyticsResponse analytics(int days) {
+    Instant since = Instant.now().minus(days, ChronoUnit.DAYS);
+
+    long totalTenants = ((Number) entityManager.createQuery("select count(t) from Tenant t")
+        .getSingleResult()).longValue();
+    long totalUsers = ((Number) entityManager.createQuery("select count(u) from User u where u.tenant is not null")
+        .getSingleResult()).longValue();
+    long totalPatients = ((Number) entityManager.createQuery("select count(p) from Patient p")
+        .getSingleResult()).longValue();
+    long totalVisits = ((Number) entityManager.createQuery("select count(v) from Visit v")
+        .getSingleResult()).longValue();
+    long totalPayments = ((Number) entityManager.createQuery("select count(p) from Payment p")
+        .getSingleResult()).longValue();
+
+    long newUsersLast30Days = ((Number) entityManager.createQuery(
+        "select count(u) from User u where u.tenant is not null and u.createdAt >= :since")
+        .setParameter("since", since)
+        .getSingleResult()).longValue();
+
+    long newTenantsLast30Days = ((Number) entityManager.createQuery(
+        "select count(t) from Tenant t where t.createdAt >= :since")
+        .setParameter("since", since)
+        .getSingleResult()).longValue();
+
+    List<ModuleUsageResponse> modules = new ArrayList<>();
+    modules.add(new ModuleUsageResponse("Pacientes", countSince("Patient", "createdAt", since)));
+    modules.add(new ModuleUsageResponse("Visitas", countSince("Visit", "createdAt", since)));
+    modules.add(new ModuleUsageResponse("Planes", countSince("PatientPlan", "updatedAt", since)));
+    modules.add(new ModuleUsageResponse("Plantillas", countSince("PlanTemplate", "createdAt", since)));
+    modules.add(new ModuleUsageResponse("Pagos", countSince("Payment", "createdAt", since)));
+    modules.add(new ModuleUsageResponse("Métricas", countSince("PatientMetric", "createdAt", since)));
+
+    modules = modules.stream()
+        .sorted((a, b) -> Long.compare(b.getCount(), a.getCount()))
+        .collect(Collectors.toList());
+
+    return new SuperAdminAnalyticsResponse(
+        totalTenants,
+        totalUsers,
+        totalPatients,
+        totalVisits,
+        totalPayments,
+        newUsersLast30Days,
+        newTenantsLast30Days,
+        modules
+    );
+  }
+
+  private long countSince(String entity, String field, Instant since) {
+    return ((Number) entityManager.createQuery(
+        "select count(e) from " + entity + " e where e." + field + " >= :since")
+        .setParameter("since", since)
+        .getSingleResult()).longValue();
   }
 
   public void resetAdminPassword(Long tenantId, String newPassword) {

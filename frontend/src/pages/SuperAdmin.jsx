@@ -8,13 +8,18 @@ export default function SuperAdmin() {
   const [error, setError] = useState('')
   const [passwords, setPasswords] = useState({})
   const [confirmTenant, setConfirmTenant] = useState(null)
+  const [analytics, setAnalytics] = useState(null)
+  const [daysRange, setDaysRange] = useState(30)
 
   useEffect(() => {
     if (user?.role !== 'SUPER_ADMIN') return
     api.get('/super/tenants')
       .then((res) => setTenants(res.data))
       .catch((err) => setError(err?.response?.data?.error || 'Error cargando tenants'))
-  }, [user?.role])
+    api.get(`/super/analytics?days=${daysRange}`)
+      .then((res) => setAnalytics(res.data))
+      .catch((err) => setError(err?.response?.data?.error || 'Error cargando analíticas'))
+  }, [user?.role, daysRange])
 
   if (user?.role !== 'SUPER_ADMIN') {
     return <div className="alert alert-info">Acceso solo para super admin.</div>
@@ -23,6 +28,101 @@ export default function SuperAdmin() {
   return (
     <div>
       <BackButton />
+      <h2 className="mb-3">Analíticas de uso</h2>
+      <div className="card mb-4">
+        <div className="card-body">
+          <div className="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+            <p className="text-muted mb-0">Últimos {daysRange} días</p>
+            <select
+              className="form-select form-select-sm w-auto"
+              value={daysRange}
+              onChange={(e) => setDaysRange(Number(e.target.value))}
+            >
+              <option value={7}>7 días</option>
+              <option value={14}>14 días</option>
+              <option value={30}>30 días</option>
+              <option value={90}>90 días</option>
+            </select>
+          </div>
+          <div className="row g-3">
+            <div className="col-6 col-lg-3">
+              <div className="border rounded p-3 h-100">
+                <div className="text-muted">Usuarios nuevos</div>
+                <div className="fs-4 fw-bold">{analytics?.newUsersLast30Days ?? '-'}</div>
+              </div>
+            </div>
+            <div className="col-6 col-lg-3">
+              <div className="border rounded p-3 h-100">
+                <div className="text-muted">Tenants nuevos</div>
+                <div className="fs-4 fw-bold">{analytics?.newTenantsLast30Days ?? '-'}</div>
+              </div>
+            </div>
+            <div className="col-6 col-lg-3">
+              <div className="border rounded p-3 h-100">
+                <div className="text-muted">Usuarios totales</div>
+                <div className="fs-4 fw-bold">{analytics?.totalUsers ?? '-'}</div>
+              </div>
+            </div>
+            <div className="col-6 col-lg-3">
+              <div className="border rounded p-3 h-100">
+                <div className="text-muted">Tenants totales</div>
+                <div className="fs-4 fw-bold">{analytics?.totalTenants ?? '-'}</div>
+              </div>
+            </div>
+          </div>
+          <div className="row g-3 mt-1">
+            <div className="col-6 col-lg-4">
+              <div className="border rounded p-3 h-100">
+                <div className="text-muted">Pacientes totales</div>
+                <div className="fs-4 fw-bold">{analytics?.totalPatients ?? '-'}</div>
+              </div>
+            </div>
+            <div className="col-6 col-lg-4">
+              <div className="border rounded p-3 h-100">
+                <div className="text-muted">Visitas totales</div>
+                <div className="fs-4 fw-bold">{analytics?.totalVisits ?? '-'}</div>
+              </div>
+            </div>
+            <div className="col-6 col-lg-4">
+              <div className="border rounded p-3 h-100">
+                <div className="text-muted">Pagos totales</div>
+                <div className="fs-4 fw-bold">{analytics?.totalPayments ?? '-'}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="card mb-5">
+        <div className="card-body">
+          <h5 className="mb-3">Módulos más usados (últimos 30 días)</h5>
+          <div className="table-responsive">
+            <table className="table table-sm align-middle">
+              <thead>
+                <tr>
+                  <th>Módulo</th>
+                  <th>Actividad</th>
+                </tr>
+              </thead>
+              <tbody>
+                {analytics?.modulesLast30Days?.length ? (
+                  analytics.modulesLast30Days.map((m) => (
+                    <tr key={m.module}>
+                      <td>{m.module}</td>
+                      <td className="fw-semibold">{m.count}</td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={2} className="text-muted">Sin datos.</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
       <h2 className="mb-3">Negocios (tenants)</h2>
       {error && <div className="alert alert-danger">{error}</div>}
       <div className="card">

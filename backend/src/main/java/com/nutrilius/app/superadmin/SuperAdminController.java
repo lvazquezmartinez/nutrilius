@@ -27,6 +27,14 @@ public class SuperAdminController {
     return ResponseEntity.ok(superAdminService.listTenants());
   }
 
+  @GetMapping("/analytics")
+  @PreAuthorize("hasRole('SUPER_ADMIN')")
+  public ResponseEntity<SuperAdminAnalyticsResponse> analytics(
+      @RequestParam(name = "days", defaultValue = "30") int days) {
+    int safeDays = Math.min(Math.max(days, 1), 365);
+    return ResponseEntity.ok(superAdminService.analytics(safeDays));
+  }
+
   @PostMapping("/tenants/{tenantId}/reset-password")
   @PreAuthorize("hasRole('SUPER_ADMIN')")
   public ResponseEntity<Void> resetPassword(@PathVariable Long tenantId, @Valid @RequestBody ResetPasswordRequest request) {
