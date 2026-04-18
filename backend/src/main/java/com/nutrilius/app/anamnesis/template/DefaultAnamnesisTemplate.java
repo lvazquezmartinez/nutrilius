@@ -32,7 +32,12 @@ public class DefaultAnamnesisTemplate {
         { \"key\": \"alergias\", \"label\": \"Alergia a algún alimento\", \"type\": \"text\" },
         { \"key\": \"restricciones\", \"label\": \"Restricciones médicas o culturales\", \"type\": \"text\" },
         { \"key\": \"no_gusta\", \"label\": \"Algo que no le guste\", \"type\": \"text\" },
-        { \"key\": \"recordatorio_24hs\", \"label\": \"Recordatorio 24hs\", \"type\": \"textarea\" },
+        { \"key\": \"comentarios\", \"label\": \"Comentarios\", \"type\": \"textarea\" }
+      ]
+    },
+    {
+      \"title\": \"Recordatorio 24hs\",
+      \"fields\": [
         { \"key\": \"desayuno\", \"label\": \"Desayuno\", \"type\": \"textarea\" },
         { \"key\": \"colacion\", \"label\": \"Colación\", \"type\": \"textarea\" },
         { \"key\": \"almuerzo\", \"label\": \"Almuerzo\", \"type\": \"textarea\" },
@@ -40,8 +45,7 @@ public class DefaultAnamnesisTemplate {
         { \"key\": \"cena\", \"label\": \"Cena\", \"type\": \"textarea\" },
         { \"key\": \"agua\", \"label\": \"Agua (consumo)\", \"type\": \"text\" },
         { \"key\": \"dulces\", \"label\": \"Dulces\", \"type\": \"text\" },
-        { \"key\": \"metodos_coccion\", \"label\": \"Métodos de cocción\", \"type\": \"text\" },
-        { \"key\": \"comentarios\", \"label\": \"Comentarios\", \"type\": \"textarea\" }
+        { \"key\": \"metodos_coccion\", \"label\": \"Métodos de cocción\", \"type\": \"text\" }
       ]
     },
     {
@@ -51,9 +55,8 @@ public class DefaultAnamnesisTemplate {
       ]
     },
     {
-      \"title\": \"Físico\",
+      \"title\": \"Examen físico\",
       \"fields\": [
-        { \"key\": \"examen_fisico\", \"label\": \"Examen físico\", \"type\": \"textarea\" },
         { \"key\": \"examen_peso\", \"label\": \"Peso\", \"type\": \"text\" },
         { \"key\": \"examen_talla\", \"label\": \"Talla\", \"type\": \"text\" },
         { \"key\": \"examen_medidas\", \"label\": \"Todas las medidas\", \"type\": \"textarea\" },

@@ -3,6 +3,8 @@ package com.nutrilius.app.patient;
 import com.nutrilius.app.security.SecurityUtil;
 import com.nutrilius.app.security.UserPrincipal;
 import com.nutrilius.app.user.UserRepository;
+import jakarta.persistence.EntityManager;
+import jakarta.transaction.Transactional;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
@@ -11,10 +13,12 @@ import org.springframework.stereotype.Service;
 public class PatientService {
   private final PatientRepository patientRepository;
   private final UserRepository userRepository;
+  private final EntityManager entityManager;
 
-  public PatientService(PatientRepository patientRepository, UserRepository userRepository) {
+  public PatientService(PatientRepository patientRepository, UserRepository userRepository, EntityManager entityManager) {
     this.patientRepository = patientRepository;
     this.userRepository = userRepository;
+    this.entityManager = entityManager;
   }
 
   public PatientResponse create(PatientCreateRequest request) {
@@ -102,6 +106,32 @@ public class PatientService {
 
   public PatientResponse get(Long id) {
     return new PatientResponse(getPatientForTenant(id));
+  }
+
+  @Transactional
+  public void delete(Long id) {
+    Patient patient = getPatientForTenant(id);
+
+    entityManager.createNativeQuery("DELETE FROM payments WHERE patient_id = :patientId")
+        .setParameter("patientId", patient.getId())
+        .executeUpdate();
+    entityManager.createNativeQuery("DELETE FROM visits WHERE patient_id = :patientId")
+        .setParameter("patientId", patient.getId())
+        .executeUpdate();
+    entityManager.createNativeQuery("DELETE FROM anamneses WHERE patient_id = :patientId")
+        .setParameter("patientId", patient.getId())
+        .executeUpdate();
+    entityManager.createNativeQuery("DELETE FROM patient_metrics WHERE patient_id = :patientId")
+        .setParameter("patientId", patient.getId())
+        .executeUpdate();
+    entityManager.createNativeQuery("DELETE FROM evolutions WHERE patient_id = :patientId")
+        .setParameter("patientId", patient.getId())
+        .executeUpdate();
+    entityManager.createNativeQuery("DELETE FROM patient_plans WHERE patient_id = :patientId")
+        .setParameter("patientId", patient.getId())
+        .executeUpdate();
+
+    patientRepository.delete(patient);
   }
 
   private String buildFullName(String firstName, String lastName) {

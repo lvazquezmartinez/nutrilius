@@ -38,4 +38,11 @@ public class PatientController {
   public ResponseEntity<PatientResponse> update(@PathVariable Long id, @Valid @RequestBody PatientCreateRequest request) {
     return ResponseEntity.ok(patientService.update(id, request));
   }
+
+  @DeleteMapping("/{id}")
+  @PreAuthorize("hasRole('ADMIN')")
+  public ResponseEntity<Void> delete(@PathVariable Long id) {
+    patientService.delete(id);
+    return ResponseEntity.noContent().build();
+  }
 }

@@ -8,6 +8,7 @@ export default function Patients() {
   const [patients, setPatients] = useState([])
   const [error, setError] = useState('')
   const [query, setQuery] = useState('')
+  const [patientToDelete, setPatientToDelete] = useState(null)
   const navigate = useNavigate()
 
   const load = (q = '') => {
@@ -20,6 +21,18 @@ export default function Patients() {
   useEffect(() => {
     load(query)
   }, [query])
+
+  const deletePatient = async () => {
+    if (!patientToDelete) return
+    setError('')
+    try {
+      await api.delete(`/patients/${patientToDelete.id}`)
+      setPatients((prev) => prev.filter((p) => p.id !== patientToDelete.id))
+      setPatientToDelete(null)
+    } catch (err) {
+      setError(err?.response?.data?.error || 'Error borrando paciente')
+    }
+  }
 
   return (
     <div>
@@ -52,12 +65,36 @@ export default function Patients() {
             {patients.map((p) => (
               <li key={p.id} className="list-group-item d-flex justify-content-between align-items-center">
                 <span>{p.fullName} {p.dni ? `- DNI: ${p.dni}` : ''}</span>
-                <Link className="btn btn-outline-primary btn-sm" to={`/patients/${p.id}`}>Ver</Link>
+                <div className="d-flex gap-2">
+                  <Link className="btn btn-outline-primary btn-sm" to={`/patients/${p.id}`}>Ver</Link>
+                  {user?.role === 'ADMIN' && (
+                    <button className="btn btn-outline-danger btn-sm" onClick={() => setPatientToDelete(p)}>
+                      Borrar
+                    </button>
+                  )}
+                </div>
               </li>
             ))}
           </ul>
         </div>
       </div>
+      {patientToDelete && (
+        <div className="modal-backdrop" onClick={() => setPatientToDelete(null)}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h5 className="modal-title">Confirmar borrado</h5>
+              <button className="btn btn-sm btn-outline-secondary" onClick={() => setPatientToDelete(null)}>Cerrar</button>
+            </div>
+            <div className="modal-body">
+              ¿Querés borrar a <strong>{patientToDelete.fullName}</strong>? Esta acción elimina también anamnesis, visitas, pagos, métricas y planes.
+            </div>
+            <div className="modal-footer">
+              <button className="btn btn-outline-secondary" onClick={() => setPatientToDelete(null)}>Cancelar</button>
+              <button className="btn btn-danger" onClick={deletePatient}>Borrar paciente</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

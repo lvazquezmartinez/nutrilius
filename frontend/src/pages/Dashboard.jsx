@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import api from '../api/client'
-import BackButton from '../components/BackButton.jsx'
 import Button from '@mui/material/Button'
 import RefreshIcon from '@mui/icons-material/Refresh'
 
@@ -37,12 +37,15 @@ export default function Dashboard() {
       {data && (
         <div className="row">
           <div className="col-md-4">
+            <Link to="/patients" className="text-decoration-none text-reset d-block">
             <div className="card">
               <div className="card-body">
                 <h5>Pacientes</h5>
                 <p className="display-6">{data.patients}</p>
+                <span className="btn btn-outline-primary btn-sm">Ver pacientes</span>
               </div>
             </div>
+            </Link>
           </div>
           <div className="col-md-4">
             <div className="card">
