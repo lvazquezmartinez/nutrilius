@@ -45,6 +45,9 @@ public class Patient {
   @Column(columnDefinition = "TEXT")
   private String notes;
 
+  @Column(name = "is_new", nullable = false)
+  private boolean isNew;
+
   @Column(name = "created_at", nullable = false, updatable = false)
   private Instant createdAt = Instant.now();
 
@@ -146,6 +149,14 @@ public class Patient {
 
   public void setNotes(String notes) {
     this.notes = notes;
+  }
+
+  public boolean isNew() {
+    return isNew;
+  }
+
+  public void setNew(boolean aNew) {
+    isNew = aNew;
   }
 
   public Instant getCreatedAt() {

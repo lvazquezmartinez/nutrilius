@@ -10,6 +10,7 @@ public class PatientCreateRequest {
   private String address;
   private String sex;
   private String notes;
+  private Boolean isNew;
 
   public String getFirstName() { return firstName; }
   public void setFirstName(String firstName) { this.firstName = firstName; }
@@ -29,4 +30,6 @@ public class PatientCreateRequest {
   public void setSex(String sex) { this.sex = sex; }
   public String getNotes() { return notes; }
   public void setNotes(String notes) { this.notes = notes; }
+  public Boolean getIsNew() { return isNew; }
+  public void setIsNew(Boolean isNew) { this.isNew = isNew; }
 }

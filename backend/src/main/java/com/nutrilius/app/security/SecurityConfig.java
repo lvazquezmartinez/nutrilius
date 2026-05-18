@@ -33,6 +33,7 @@ public class SecurityConfig {
                 "/auth/confirm",
                 "/auth/request-reset",
                 "/auth/reset",
+                "/public/booking/**",
                 "/public/plan/**",
                 "/actuator/health"
             ).permitAll()

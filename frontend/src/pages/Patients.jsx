@@ -64,7 +64,10 @@ export default function Patients() {
           <ul className="list-group">
             {patients.map((p) => (
               <li key={p.id} className="list-group-item d-flex justify-content-between align-items-center">
-                <span>{p.fullName} {p.dni ? `- DNI: ${p.dni}` : ''}</span>
+                <span>
+                  {p.fullName} {p.dni ? `- DNI: ${p.dni}` : ''}
+                  {p.isNew && <span className="badge rounded-pill bg-warning text-dark ms-2">Nuevo</span>}
+                </span>
                 <div className="d-flex gap-2">
                   <Link className="btn btn-outline-primary btn-sm" to={`/patients/${p.id}`}>Ver</Link>
                   {user?.role === 'ADMIN' && (

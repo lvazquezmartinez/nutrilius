@@ -7,10 +7,11 @@ import Tab from '@mui/material/Tab'
 
 export default function Settings() {
   const user = useMemo(() => JSON.parse(localStorage.getItem('user') || 'null'), [])
+  const publicBaseUrl = window.location.origin
   const [insurances, setInsurances] = useState([])
   const [insuranceName, setInsuranceName] = useState('')
   const [templateJson, setTemplateJson] = useState('')
-  const [settings, setSettings] = useState({ nutritionistName: '', businessName: '', licenseNumber: '', planType: 'BASIC', hasLogo: false })
+  const [settings, setSettings] = useState({ nutritionistName: '', businessName: '', licenseNumber: '', planType: 'BASIC', publicBookingSlug: '', hasLogo: false })
   const [error, setError] = useState('')
   const [tab, setTab] = useState(0)
   const [users, setUsers] = useState([])
@@ -83,7 +84,8 @@ export default function Settings() {
       const res = await api.put('/settings', {
         nutritionistName: settings.nutritionistName,
         businessName: settings.businessName,
-        licenseNumber: settings.licenseNumber
+        licenseNumber: settings.licenseNumber,
+        publicBookingSlug: settings.publicBookingSlug
       })
       setSettings(res.data)
     } catch (err) {
@@ -218,6 +220,24 @@ export default function Settings() {
                   <label className="form-label">Logo (marca de agua)</label>
                   <input className="form-control" type="file" accept="image/*" onChange={uploadLogo} />
                   {settings.hasLogo && <div className="text-muted small mt-1">Logo cargado</div>}
+                </div>
+                <div className="col-md-6">
+                  <label className="form-label">Slug de turnos públicos</label>
+                  <input className="form-control" value={settings.publicBookingSlug || ''} onChange={(e) => setSettings({ ...settings, publicBookingSlug: e.target.value })} />
+                </div>
+                <div className="col-md-6">
+                  <label className="form-label">Link público para turnos</label>
+                  <div className="input-group">
+                    <input className="form-control" readOnly value={`${publicBaseUrl}/book/${settings.publicBookingSlug || ''}`} />
+                    <button
+                      className="btn btn-outline-secondary"
+                      type="button"
+                      onClick={() => navigator.clipboard.writeText(`${publicBaseUrl}/book/${settings.publicBookingSlug || ''}`)}
+                      disabled={!settings.publicBookingSlug}
+                    >
+                      Copiar
+                    </button>
+                  </div>
                 </div>
                 <div className="col-12">
                   <button className="btn btn-primary" type="submit">Guardar</button>

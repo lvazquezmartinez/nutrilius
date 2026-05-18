@@ -1,11 +1,13 @@
 import React from 'react'
 import { Routes, Route, Navigate, NavLink, useNavigate } from 'react-router-dom'
 import Landing from './pages/Landing.jsx'
+import PublicBooking from './pages/PublicBooking.jsx'
 import Login from './pages/Login.jsx'
 import Register from './pages/Register.jsx'
 import ForgotPassword from './pages/ForgotPassword.jsx'
 import ResetPassword from './pages/ResetPassword.jsx'
 import Dashboard from './pages/Dashboard.jsx'
+import Calendar from './pages/Calendar.jsx'
 import Patients from './pages/Patients.jsx'
 import PatientCreate from './pages/PatientCreate.jsx'
 import PatientDetail from './pages/PatientDetail.jsx'
@@ -40,6 +42,7 @@ const AppLayout = ({ children }) => {
         <div className="sidebar-header">Nutrilius</div>
         <nav className="sidebar-nav">
           <NavLink className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`} to="/dashboard">Dashboard</NavLink>
+          <NavLink className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`} to="/calendar">Calendario</NavLink>
           <NavLink className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`} to="/patients">Pacientes</NavLink>
           {user?.role === 'ADMIN' && (
             <NavLink className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`} to="/settings">Configuración</NavLink>
@@ -65,6 +68,7 @@ export default function App() {
   return (
     <Routes>
       <Route path="/" element={<Landing />} />
+      <Route path="/book/:slug" element={<PublicBooking />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -75,6 +79,16 @@ export default function App() {
           <PrivateRoute>
             <AppLayout>
               <Dashboard />
+            </AppLayout>
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/calendar"
+        element={
+          <PrivateRoute>
+            <AppLayout>
+              <Calendar />
             </AppLayout>
           </PrivateRoute>
         }

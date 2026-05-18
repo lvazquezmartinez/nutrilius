@@ -5,6 +5,7 @@ public class TenantSettingsRequest {
   private String businessName;
   private String licenseNumber;
   private String planType;
+  private String publicBookingSlug;
 
   public String getNutritionistName() { return nutritionistName; }
   public void setNutritionistName(String nutritionistName) { this.nutritionistName = nutritionistName; }
@@ -14,4 +15,6 @@ public class TenantSettingsRequest {
   public void setLicenseNumber(String licenseNumber) { this.licenseNumber = licenseNumber; }
   public String getPlanType() { return planType; }
   public void setPlanType(String planType) { this.planType = planType; }
+  public String getPublicBookingSlug() { return publicBookingSlug; }
+  public void setPublicBookingSlug(String publicBookingSlug) { this.publicBookingSlug = publicBookingSlug; }
 }

@@ -9,8 +9,23 @@ export default function PatientPayments() {
   const [payments, setPayments] = useState([])
   const [insurances, setInsurances] = useState([])
   const [patient, setPatient] = useState(null)
-  const toDateTimeLocal = (d) => d.toISOString().slice(0, 16)
-  const [payment, setPayment] = useState({ method: 'CASH', insuranceId: '', amount: '', paidAt: toDateTimeLocal(new Date()) })
+  const toDateTimeLocal = (date) => {
+    const d = new Date(date)
+    const year = d.getFullYear()
+    const month = String(d.getMonth() + 1).padStart(2, '0')
+    const day = String(d.getDate()).padStart(2, '0')
+    const hours = String(d.getHours()).padStart(2, '0')
+    const minutes = String(d.getMinutes()).padStart(2, '0')
+    return `${year}-${month}-${day}T${hours}:${minutes}`
+  }
+  const [payment, setPayment] = useState({
+    method: 'CASH',
+    status: 'PAID',
+    insuranceId: '',
+    amount: '',
+    paidAt: toDateTimeLocal(new Date()),
+    dueAt: ''
+  })
   const [error, setError] = useState('')
 
   useEffect(() => {
@@ -30,11 +45,13 @@ export default function PatientPayments() {
     try {
       await api.post(`/patients/${id}/payments`, {
         method: payment.method,
+        status: payment.status,
         insuranceId: payment.method === 'INSURANCE' ? Number(payment.insuranceId) : null,
         amount: Number(payment.amount),
-        paidAt: payment.paidAt || null
+        paidAt: payment.status === 'PAID' ? (payment.paidAt || null) : null,
+        dueAt: payment.status !== 'PAID' ? (payment.dueAt || null) : null
       })
-      setPayment({ method: 'CASH', insuranceId: '', amount: '', paidAt: toDateTimeLocal(new Date()) })
+      setPayment({ method: 'CASH', status: 'PAID', insuranceId: '', amount: '', paidAt: toDateTimeLocal(new Date()), dueAt: '' })
       const res = await api.get(`/patients/${id}/payments`)
       setPayments(res.data)
     } catch (err) {
@@ -60,6 +77,13 @@ export default function PatientPayments() {
               </select>
             </div>
             <div className="col-md-3">
+              <select className="form-select" value={payment.status} onChange={(e) => setPayment({ ...payment, status: e.target.value })}>
+                <option value="PAID">Pagado</option>
+                <option value="PENDING">Pendiente</option>
+                <option value="OVERDUE">Vencido</option>
+              </select>
+            </div>
+            <div className="col-md-3">
               <select className="form-select" value={payment.insuranceId} onChange={(e) => setPayment({ ...payment, insuranceId: e.target.value })} disabled={payment.method !== 'INSURANCE'}>
                 <option value="">Obra social</option>
                 {insurances.map((i) => (
@@ -70,8 +94,17 @@ export default function PatientPayments() {
             <div className="col-md-2">
               <input className="form-control" type="number" placeholder="Monto" value={payment.amount} onChange={(e) => setPayment({ ...payment, amount: e.target.value })} />
             </div>
-            <div className="col-md-2">
-              <input className="form-control" type="datetime-local" value={payment.paidAt} onChange={(e) => setPayment({ ...payment, paidAt: e.target.value })} />
+            <div className="col-md-3">
+              <input
+                className="form-control"
+                type="datetime-local"
+                value={payment.status === 'PAID' ? payment.paidAt : payment.dueAt}
+                onChange={(e) => setPayment({
+                  ...payment,
+                  paidAt: payment.status === 'PAID' ? e.target.value : payment.paidAt,
+                  dueAt: payment.status !== 'PAID' ? e.target.value : payment.dueAt
+                })}
+              />
             </div>
             <div className="col-md-2">
               <button className="btn btn-primary w-100" type="submit">Guardar</button>
@@ -86,7 +119,16 @@ export default function PatientPayments() {
           <ul className="list-group">
             {payments.map((p) => (
               <li key={p.id} className="list-group-item">
-                {p.method} - ${p.amount} - {new Date(p.paidAt).toLocaleString()}
+                <div className="d-flex justify-content-between align-items-center">
+                  <div>
+                    <strong>{p.method}</strong> - ${p.amount}
+                    <div className="text-muted small">
+                      Estado: {p.status}
+                      {p.paidAt ? ` | Pagado: ${new Date(p.paidAt).toLocaleString()}` : ''}
+                      {p.dueAt ? ` | Vence: ${new Date(p.dueAt).toLocaleString()}` : ''}
+                    </div>
+                  </div>
+                </div>
               </li>
             ))}
           </ul>

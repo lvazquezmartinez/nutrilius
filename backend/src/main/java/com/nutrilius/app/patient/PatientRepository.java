@@ -7,6 +7,7 @@ import org.springframework.data.repository.query.Param;
 
 public interface PatientRepository extends JpaRepository<Patient, Long> {
   List<Patient> findByTenantId(Long tenantId);
+  java.util.Optional<Patient> findByTenantIdAndDni(Long tenantId, String dni);
 
   @Query("""
       select p from Patient p

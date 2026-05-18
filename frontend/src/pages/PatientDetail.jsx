@@ -5,15 +5,25 @@ import BackButton from '../components/BackButton.jsx'
 
 export default function PatientDetail() {
   const { id } = useParams()
+  const toDateTimeLocal = (date) => {
+    const d = new Date(date)
+    const year = d.getFullYear()
+    const month = String(d.getMonth() + 1).padStart(2, '0')
+    const day = String(d.getDate()).padStart(2, '0')
+    const hours = String(d.getHours()).padStart(2, '0')
+    const minutes = String(d.getMinutes()).padStart(2, '0')
+    return `${year}-${month}-${day}T${hours}:${minutes}`
+  }
+  const toDateInput = (d) => d.toISOString().slice(0, 10)
   const [patient, setPatient] = useState(null)
   const [anamnesisTemplate, setAnamnesisTemplate] = useState(null)
   const [anamnesisData, setAnamnesisData] = useState({})
   const [anamnesisList, setAnamnesisList] = useState([])
   const [visits, setVisits] = useState([])
-  const toDateInput = (d) => d.toISOString().slice(0, 10)
-  const toDateTimeLocal = (d) => d.toISOString().slice(0, 16)
 
-  const [visitDate, setVisitDate] = useState(toDateInput(new Date()))
+  const [visitDate, setVisitDate] = useState(toDateTimeLocal(new Date()))
+  const [visitStatus, setVisitStatus] = useState('SCHEDULED')
+  const [visitDuration, setVisitDuration] = useState('45')
   const [visitNotes, setVisitNotes] = useState('')
   const [metrics, setMetrics] = useState([])
   const [metricForm, setMetricForm] = useState({
@@ -63,7 +73,7 @@ export default function PatientDetail() {
   }
 
   useEffect(() => {
-    setVisitDate(toDateInput(new Date()))
+    setVisitDate(toDateTimeLocal(new Date()))
     loadAll()
   }, [id])
 
@@ -118,10 +128,15 @@ export default function PatientDetail() {
     setError('')
     try {
       await api.post(`/patients/${id}/visits`, {
-        visitDate: visitDate || null,
+        visitDate: visitDate ? visitDate.slice(0, 10) : null,
+        scheduledAt: visitDate || null,
+        durationMinutes: visitDuration ? Number(visitDuration) : 45,
+        status: visitStatus,
         notes: visitNotes
       })
-      setVisitDate(toDateInput(new Date()))
+      setVisitDate(toDateTimeLocal(new Date()))
+      setVisitStatus('SCHEDULED')
+      setVisitDuration('45')
       setVisitNotes('')
       loadAll()
     } catch (err) {
@@ -238,6 +253,20 @@ export default function PatientDetail() {
     }
     setPlanPdfUrl('')
     setShowPlanPdf(false)
+  }
+
+  const buildGoogleCalendarUrl = (visit) => {
+    const scheduledAt = visit?.scheduledAt ? new Date(visit.scheduledAt) : null
+    if (!scheduledAt || Number.isNaN(scheduledAt.getTime())) return '#'
+    const end = new Date(scheduledAt.getTime() + (Number(visit.durationMinutes || 45) * 60000))
+    const format = (date) => date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z'
+    const params = new URLSearchParams({
+      action: 'TEMPLATE',
+      text: `Consulta nutricional - ${patient?.fullName || 'Paciente'}`,
+      dates: `${format(scheduledAt)}/${format(end)}`,
+      details: visit.notes || 'Turno generado desde Nutrilius'
+    })
+    return `https://calendar.google.com/calendar/render?${params.toString()}`
   }
 
   const renderLineChart = (label, key, unit) => {
@@ -550,9 +579,20 @@ export default function PatientDetail() {
         <div className="card-body">
           <form onSubmit={submitVisit} className="row g-2">
             <div className="col-md-3">
-              <input className="form-control" type="date" value={visitDate} onChange={(e) => setVisitDate(e.target.value)} />
+              <input className="form-control" type="datetime-local" value={visitDate} onChange={(e) => setVisitDate(e.target.value)} />
             </div>
-            <div className="col-md-7">
+            <div className="col-md-2">
+              <input className="form-control" type="number" min="15" step="15" value={visitDuration} onChange={(e) => setVisitDuration(e.target.value)} placeholder="Duración" />
+            </div>
+            <div className="col-md-2">
+              <select className="form-select" value={visitStatus} onChange={(e) => setVisitStatus(e.target.value)}>
+                <option value="SCHEDULED">Programada</option>
+                <option value="CONFIRMED">Confirmada</option>
+                <option value="COMPLETED">Completada</option>
+                <option value="CANCELED">Cancelada</option>
+              </select>
+            </div>
+            <div className="col-md-3">
               <input className="form-control" placeholder="Notas" value={visitNotes} onChange={(e) => setVisitNotes(e.target.value)} />
             </div>
             <div className="col-md-2">
@@ -561,8 +601,18 @@ export default function PatientDetail() {
           </form>
           <ul className="list-group mt-3">
             {visits.map((v) => (
-              <li key={v.id} className="list-group-item">
-                {v.visitDate} - {v.notes || 'Sin notas'}
+              <li key={v.id} className="list-group-item d-flex justify-content-between align-items-center">
+                <div>
+                  <div className="fw-semibold">{v.scheduledAt ? new Date(v.scheduledAt).toLocaleString() : v.visitDate}</div>
+                  <div className="text-muted small">
+                    {v.status} | {v.durationMinutes || 45} min
+                    {v.reminderSent ? ' | recordatorio enviado' : ''}
+                  </div>
+                  <div>{v.notes || 'Sin notas'}</div>
+                </div>
+                <a className="btn btn-outline-secondary btn-sm" href={buildGoogleCalendarUrl(v)} target="_blank" rel="noreferrer">
+                  Google Calendar
+                </a>
               </li>
             ))}
           </ul>

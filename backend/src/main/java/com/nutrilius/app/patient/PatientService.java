@@ -38,6 +38,7 @@ public class PatientService {
     patient.setAddress(request.getAddress());
     patient.setSex(request.getSex());
     patient.setNotes(request.getNotes());
+    patient.setNew(request.getIsNew() != null ? request.getIsNew() : true);
     patient.setTenant(userRepository.findById(current.getUserId()).orElseThrow().getTenant());
     patient.setCreatedBy(userRepository.findById(current.getUserId()).orElseThrow());
 
@@ -87,6 +88,9 @@ public class PatientService {
     patient.setAddress(request.getAddress());
     patient.setSex(request.getSex());
     patient.setNotes(request.getNotes());
+    if (request.getIsNew() != null) {
+      patient.setNew(request.getIsNew());
+    }
     Patient saved = patientRepository.save(patient);
     return new PatientResponse(saved);
   }
@@ -139,5 +143,16 @@ public class PatientService {
     String ln = lastName == null ? "" : lastName.trim();
     String full = (fn + " " + ln).trim();
     return full.isEmpty() ? "Sin nombre" : full;
+  }
+
+  public java.util.Optional<Patient> findByTenantAndDni(Long tenantId, String dni) {
+    if (tenantId == null || dni == null || dni.trim().isEmpty()) {
+      return java.util.Optional.empty();
+    }
+    return patientRepository.findByTenantIdAndDni(tenantId, dni.trim());
+  }
+
+  public Patient save(Patient patient) {
+    return patientRepository.save(patient);
   }
 }

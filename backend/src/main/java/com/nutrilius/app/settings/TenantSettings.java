@@ -23,6 +23,9 @@ public class TenantSettings {
   @Column(name = "plan_type")
   private String planType;
 
+  @Column(name = "public_booking_slug", unique = true)
+  private String publicBookingSlug;
+
   @Column(name = "logo_mime")
   private String logoMime;
 
@@ -45,6 +48,8 @@ public class TenantSettings {
   public void setLicenseNumber(String licenseNumber) { this.licenseNumber = licenseNumber; }
   public String getPlanType() { return planType; }
   public void setPlanType(String planType) { this.planType = planType; }
+  public String getPublicBookingSlug() { return publicBookingSlug; }
+  public void setPublicBookingSlug(String publicBookingSlug) { this.publicBookingSlug = publicBookingSlug; }
   public String getLogoMime() { return logoMime; }
   public void setLogoMime(String logoMime) { this.logoMime = logoMime; }
   public byte[] getLogoBlob() { return logoBlob; }

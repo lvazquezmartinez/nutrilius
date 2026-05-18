@@ -35,8 +35,9 @@ export default function Dashboard() {
       </div>
       {error && <div className="alert alert-danger">{error}</div>}
       {data && (
-        <div className="row">
-          <div className="col-md-4">
+        <>
+        <div className="row g-3">
+          <div className="col-md-3">
             <Link to="/patients" className="text-decoration-none text-reset d-block">
             <div className="card">
               <div className="card-body">
@@ -47,7 +48,7 @@ export default function Dashboard() {
             </div>
             </Link>
           </div>
-          <div className="col-md-4">
+          <div className="col-md-3">
             <div className="card">
               <div className="card-body">
                 <h5>Visitas</h5>
@@ -55,7 +56,15 @@ export default function Dashboard() {
               </div>
             </div>
           </div>
-          <div className="col-md-4">
+          <div className="col-md-3">
+            <div className="card">
+              <div className="card-body">
+                <h5>Próximos turnos</h5>
+                <p className="display-6">{data.upcomingVisits}</p>
+              </div>
+            </div>
+          </div>
+          <div className="col-md-3">
             <div className="card">
               <div className="card-body">
                 <h5>Pagos (total)</h5>
@@ -64,6 +73,42 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
+        <div className="row g-3 mt-1">
+          <div className="col-md-6">
+            <div className="card">
+              <div className="card-body">
+                <h5>Pagos pendientes</h5>
+                <p className="display-6">${data.pendingPaymentsTotal}</p>
+                <div className="text-muted">{data.overduePayments} vencidos</div>
+              </div>
+            </div>
+          </div>
+          <div className="col-md-6">
+            <div className="card">
+              <div className="card-body">
+                <h5>Próximas visitas</h5>
+                {data.nextVisits?.length ? (
+                  <ul className="list-group list-group-flush">
+                    {data.nextVisits.map((visit) => (
+                      <li key={visit.id} className="list-group-item d-flex justify-content-between align-items-center px-0">
+                        <div>
+                          <div className="fw-semibold">{visit.patientName}</div>
+                          <div className="text-muted small">{new Date(visit.scheduledAt).toLocaleString()}</div>
+                        </div>
+                        <Link className="btn btn-outline-primary btn-sm" to={`/patients/${visit.patientId}`}>
+                          Ver
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <div className="text-muted">No hay turnos próximos.</div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+        </>
       )}
     </div>
   )

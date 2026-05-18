@@ -1,5 +1,6 @@
 package com.nutrilius.app.patient;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.Instant;
 
 public class PatientResponse {
@@ -14,6 +15,7 @@ public class PatientResponse {
   private String address;
   private String sex;
   private String notes;
+  private boolean isNew;
   private Instant createdAt;
 
   public PatientResponse(Patient patient) {
@@ -28,6 +30,7 @@ public class PatientResponse {
     this.address = patient.getAddress();
     this.sex = patient.getSex();
     this.notes = patient.getNotes();
+    this.isNew = patient.isNew();
     this.createdAt = patient.getCreatedAt();
   }
 
@@ -48,6 +51,8 @@ public class PatientResponse {
   public String getAddress() { return address; }
   public String getSex() { return sex; }
   public String getNotes() { return notes; }
+  @JsonProperty("isNew")
+  public boolean getIsNew() { return isNew; }
 
   public Instant getCreatedAt() {
     return createdAt;

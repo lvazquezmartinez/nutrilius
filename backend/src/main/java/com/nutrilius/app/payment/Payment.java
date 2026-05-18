@@ -1,6 +1,7 @@
 package com.nutrilius.app.payment;
 
 import com.nutrilius.app.common.PaymentMethod;
+import com.nutrilius.app.common.PaymentStatus;
 import com.nutrilius.app.insurance.Insurance;
 import com.nutrilius.app.patient.Patient;
 import com.nutrilius.app.tenant.Tenant;
@@ -43,8 +44,16 @@ public class Payment {
   @Column(nullable = false, precision = 10, scale = 2)
   private BigDecimal amount;
 
-  @Column(name = "paid_at", nullable = false)
+  @Column(name = "paid_at")
   private LocalDateTime paidAt;
+
+  @Column(name = "due_at")
+  private LocalDateTime dueAt;
+
+  @Enumerated(EnumType.STRING)
+  @JdbcTypeCode(SqlTypes.VARCHAR)
+  @Column(nullable = false)
+  private PaymentStatus status = PaymentStatus.PAID;
 
   @Column(name = "created_at", nullable = false, updatable = false)
   private Instant createdAt = Instant.now();
@@ -107,6 +116,22 @@ public class Payment {
 
   public void setPaidAt(LocalDateTime paidAt) {
     this.paidAt = paidAt;
+  }
+
+  public LocalDateTime getDueAt() {
+    return dueAt;
+  }
+
+  public void setDueAt(LocalDateTime dueAt) {
+    this.dueAt = dueAt;
+  }
+
+  public PaymentStatus getStatus() {
+    return status;
+  }
+
+  public void setStatus(PaymentStatus status) {
+    this.status = status;
   }
 
   public Instant getCreatedAt() {

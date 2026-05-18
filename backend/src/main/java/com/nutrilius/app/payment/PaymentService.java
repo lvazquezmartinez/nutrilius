@@ -1,6 +1,7 @@
 package com.nutrilius.app.payment;
 
 import com.nutrilius.app.common.PaymentMethod;
+import com.nutrilius.app.common.PaymentStatus;
 import com.nutrilius.app.insurance.Insurance;
 import com.nutrilius.app.insurance.InsuranceRepository;
 import com.nutrilius.app.patient.Patient;
@@ -65,7 +66,14 @@ public class PaymentService {
       throw new IllegalArgumentException("Monto requerido");
     }
     payment.setAmount(java.math.BigDecimal.valueOf(request.getAmount()));
-    payment.setPaidAt(request.getPaidAt() != null ? request.getPaidAt() : LocalDateTime.now());
+    payment.setDueAt(request.getDueAt());
+    PaymentStatus status = request.getStatus() != null ? request.getStatus() : defaultStatus(request);
+    if (status == PaymentStatus.PAID) {
+      payment.setPaidAt(request.getPaidAt() != null ? request.getPaidAt() : LocalDateTime.now());
+    } else {
+      payment.setPaidAt(null);
+    }
+    payment.setStatus(resolveStatus(status, payment.getDueAt(), payment.getPaidAt()));
 
     return new PaymentResponse(paymentRepository.save(payment));
   }
@@ -73,9 +81,38 @@ public class PaymentService {
   public List<PaymentResponse> list(Long patientId) {
     UserPrincipal current = SecurityUtil.currentUser();
     patientService.getPatientForTenant(patientId);
-    return paymentRepository.findByTenantIdAndPatientId(current.getTenantId(), patientId)
+    return paymentRepository.findByTenantIdAndPatientIdOrderByCreatedAtDescIdDesc(current.getTenantId(), patientId)
         .stream()
+        .peek(this::refreshOverdueStatus)
         .map(PaymentResponse::new)
         .collect(Collectors.toList());
+  }
+
+  private PaymentStatus defaultStatus(PaymentCreateRequest request) {
+    if (request.getPaidAt() != null) {
+      return PaymentStatus.PAID;
+    }
+    if (request.getDueAt() != null && request.getDueAt().isBefore(LocalDateTime.now())) {
+      return PaymentStatus.OVERDUE;
+    }
+    return PaymentStatus.PENDING;
+  }
+
+  private PaymentStatus resolveStatus(PaymentStatus requested, LocalDateTime dueAt, LocalDateTime paidAt) {
+    if (paidAt != null || requested == PaymentStatus.PAID) {
+      return PaymentStatus.PAID;
+    }
+    if (dueAt != null && dueAt.isBefore(LocalDateTime.now())) {
+      return PaymentStatus.OVERDUE;
+    }
+    return requested != null ? requested : PaymentStatus.PENDING;
+  }
+
+  private void refreshOverdueStatus(Payment payment) {
+    PaymentStatus resolved = resolveStatus(payment.getStatus(), payment.getDueAt(), payment.getPaidAt());
+    if (resolved != payment.getStatus()) {
+      payment.setStatus(resolved);
+      paymentRepository.save(payment);
+    }
   }
 }
