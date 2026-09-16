@@ -8,6 +8,7 @@ resource "google_sql_database_instance" "main" {
 
   settings {
     tier              = var.sql_tier
+    edition           = "ENTERPRISE" # los tiers shared-core (db-f1-micro) son de esta edición
     availability_type = "ZONAL"
     disk_autoresize   = true
 

@@ -48,6 +48,15 @@ class UserCreateSerializer(serializers.ModelSerializer):
         return value
 
 
+class GoogleRegisterSerializer(serializers.Serializer):
+    """Registro de consultorio con Google: el token + lo que Google no aporta."""
+
+    credential = serializers.CharField()
+    business_name = serializers.CharField(max_length=200)
+    first_name = serializers.CharField(max_length=120, required=False, allow_blank=True)
+    last_name = serializers.CharField(max_length=120, required=False, allow_blank=True)
+
+
 class RequestResetSerializer(serializers.Serializer):
     email = serializers.EmailField()
 
