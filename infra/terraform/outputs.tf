@@ -1,6 +1,11 @@
 output "load_balancer_ip" {
   value       = google_compute_global_address.lb.address
-  description = "IP del Load Balancer. Crear un registro A en DonWeb (dominio -> esta IP). NO cambiar nameservers."
+  description = "IP del Load Balancer (destino del registro A del dominio)."
+}
+
+output "dns_name_servers" {
+  value       = google_dns_managed_zone.main.name_servers
+  description = "Nameservers a cargar en DonWeb (reemplazan a los awsdns viejos)."
 }
 
 output "api_service_url" {
