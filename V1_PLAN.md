@@ -90,15 +90,18 @@ Los IDs `RF-*` / `RNF-*` refieren a `REQUERIMIENTOS.md`.
 
 ---
 
-## Infra & Deploy (GCP serverless + Terraform)
-Ver `INFRAESTRUCTURA.md` (arquitectura serverless).
-- [ ] Terraform: Artifact Registry, Cloud Run (API), Cloud SQL, buckets GCS (front + media), HTTPS LB + Cloud CDN, Cloud Tasks, service accounts/IAM (RNF-14)
-- [ ] Secret Manager: contenedores por Terraform + carga de valores aparte (RNF-07)
-- [ ] Endpoint interno autenticado (OIDC) para procesar Cloud Tasks (reemplaza worker Celery)
-- [ ] Bucket de state de Terraform
-- [ ] Migraciones como job de release en Cloud Run
-- [ ] Deploy del frontend a GCS + invalidación de CDN
-- [ ] CI/CD (build imagen → Artifact Registry → Cloud Run; build SPA → GCS)
+## Infra & Deploy (GCP serverless + Terraform) 🚧
+Ver `INFRAESTRUCTURA.md` y `reference-deploy-gcp` (memoria). **App live** en Cloud Run.
+- [x] Terraform aplicado: Artifact Registry, Cloud Run (API), Cloud SQL, buckets GCS, HTTPS LB + Cloud CDN, Cloud Tasks, SAs/IAM (RNF-14)
+- [x] Secret Manager: contenedores + valores (ai-api-key/smtp con **placeholder**, reemplazar por reales) (RNF-07)
+- [x] Bucket de state de Terraform
+- [x] Migraciones como job de release en Cloud Run (corridas; DB OK)
+- [x] Primer deploy manual (Django live, `/health/ready` db:true)
+- [ ] DNS propagando + cert SSL del dominio (registro A cargado en DonWeb)
+- [ ] Endpoint interno OIDC para Cloud Tasks (reemplaza worker Celery) — deuda
+- [ ] Deploy del frontend (SPA) al bucket GCS
+- [ ] CI/CD: pipeline escrito; falta cargar las 7 Variables en GitHub
+- [ ] Login con Google en prod: crear OAuth client Web + cargar `google-oauth-client-id`
 
 ---
 
