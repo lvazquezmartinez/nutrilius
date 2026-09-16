@@ -1,0 +1,10 @@
+# Copiar a terraform.tfvars y completar. NO commitear terraform.tfvars con valores reales.
+project_id  = "nutrilius-prod"
+region      = "southamerica-east1"
+domain      = "nutrilius.com.ar"
+github_repo = "lvazquezmartinez/nutrilius"
+
+# Opcionales
+# sql_tier          = "db-f1-micro"
+# run_min_instances = 0
+# run_max_instances = 4

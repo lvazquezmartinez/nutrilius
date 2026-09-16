@@ -18,9 +18,10 @@ django-redis>=5.4,<5.5
 # Tareas async
 celery>=5.4,<5.5
 
-# Storage S3-compatible (MinIO / GCS)
+# Storage: GCS en prod; S3/MinIO en dev
 django-storages>=1.14,<1.15
-boto3>=1.35
+google-cloud-storage>=2.18   # backend GCS (prod)
+boto3>=1.35                  # backend S3/MinIO (dev)
 
 # Servidor
 gunicorn>=23.0
