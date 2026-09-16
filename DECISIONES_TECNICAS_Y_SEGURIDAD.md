@@ -33,9 +33,9 @@ Formato: estilo ADR (Architecture Decision Record) resumido.
 - **Por qué:** API stateless consumida por un SPA React; JWT es el encaje natural. El refresh permite sesiones largas sin exponer el access token.
 
 ### DT-05 Tareas asíncronas
-- **Decisión:** **Celery** con Redis o RabbitMQ como broker.
-- **Alternativas:** cron + management commands; Django-Q.
-- **Por qué:** mail, generación de PDF y llamadas a la IA no deben bloquear el request. Celery es el estándar del ecosistema y soporta reintentos.
+- **Decisión:** **Cloud Tasks** (GCP) que encola trabajos como HTTP y los reingresa a un endpoint interno autenticado (OIDC) de la API en Cloud Run.
+- **Alternativas:** Celery + Redis/RabbitMQ (requiere broker y worker siempre encendido); Pub/Sub; Django-Q.
+- **Por qué:** en una arquitectura serverless no queremos un worker permanente ni Memorystore (costo fijo). Cloud Tasks da reintentos y desacople sin infraestructura extra. *(Actualizado desde Celery al pasar a serverless; las funciones de tarea se conservan, cambia el mecanismo de disparo.)*
 
 ### DT-06 Base de datos
 - **Decisión:** **PostgreSQL**.
@@ -43,13 +43,14 @@ Formato: estilo ADR (Architecture Decision Record) resumido.
 - **Por qué:** mejor soporte de JSON, índices, RLS y crecimiento del modelo; base sólida para datos clínicos.
 
 ### DT-07 Cache
-- **Decisión:** **Redis** (`django-redis`).
-- **Por qué:** cache de lecturas frecuentes y backend de sesiones/locks; reutilizable como broker de Celery.
+- **Decisión:** **sin cache dedicada** en el prototipo serverless (se evita Memorystore por su costo fijo). En dev se usa Redis local; en prod, si hiciera falta, se evalúa Memorystore o cache local por instancia.
+- **Alternativas:** Memorystore (Redis gestionado, ~USD 35/mes).
+- **Por qué:** el prototipo no tiene una carga de lectura que justifique Redis gestionado; se prioriza costo. *(Actualizado al pasar a serverless.)*
 
 ### DT-08 Almacenamiento de archivos
-- **Decisión:** **S3-compatible** (MinIO en dev, Google Cloud Storage en prod) vía `django-storages` + `boto3`.
+- **Decisión:** **Google Cloud Storage (GCS)** vía `django-storages`; buckets privados con **URLs firmadas** para logos y PDFs. MinIO se usa solo en dev.
 - **Alternativas:** guardar binarios en base (la versión previa guardaba el logo como `LONGBLOB`).
-- **Por qué:** los binarios (logos, PDFs) no deben vivir en la base; storage externo escala y abarata backups.
+- **Por qué:** los binarios no deben vivir en la base; GCS es el storage nativo de la nube elegida y sirve además de origen para la CDN del frontend.
 
 ### DT-09 Integración de IA
 - **Decisión:** capa propia de orquestación con **proveedor/modelo configurable** (OpenAI/OpenRouter), en 3 etapas: motor de reglas → LLM acotado → validación. Sin modelos hardcodeados.
@@ -61,9 +62,9 @@ Formato: estilo ADR (Architecture Decision Record) resumido.
 - **Por qué:** reproducibilidad y separación de configuración por entorno; simple de entender para la defensa.
 
 ### DT-11 Infraestructura y despliegue
-- **Decisión:** **GCP Compute Engine (1 VM) + Docker Compose**, aprovisionado con **Terraform**, Cloudflare al frente.
-- **Alternativas:** Cloud Run + servicios administrados (Cloud SQL, Memorystore); Kubernetes.
-- **Por qué:** costo bajo y predecible para un prototipo, reuso del Docker Compose, Terraform simple pero real. Detalle y comparación en `INFRAESTRUCTURA.md`.
+- **Decisión:** **serverless en GCP** con Terraform: API en **Cloud Run**, base en **Cloud SQL**, frontend estático en **GCS + HTTPS Load Balancer + Cloud CDN**, tareas en **Cloud Tasks**, archivos en **GCS**, secretos en **Secret Manager**.
+- **Alternativas:** VM única (Compute Engine + Docker Compose) — enfoque previo; Kubernetes (GKE) — sobreingeniería.
+- **Por qué:** escalar a cero, no administrar servidores y mantener los secretos fuera del código. Se acepta el costo fijo de Cloud SQL y del Load Balancer a cambio de operación mínima. Detalle en `INFRAESTRUCTURA.md`. *(Actualizado desde la VM única a serverless.)*
 
 ---
 
@@ -100,9 +101,10 @@ Formato: estilo ADR (Architecture Decision Record) resumido.
 - **Requerimiento:** RF-06.
 
 ### DS-07 Gestión de secretos
-- **Decisión:** secretos (JWT, DB, API de IA, SMTP) **fuera del repositorio y del state de Terraform**: en `.env` de la VM o en Secret Manager. `.env` real nunca versionado.
-- **Riesgo que mitiga:** filtración de credenciales por el repo o el state.
+- **Decisión:** secretos (JWT, DB, API de IA, SMTP) en **GCP Secret Manager**, inyectados en Cloud Run como env/volúmenes al deploy. Terraform crea solo los *contenedores*; los valores se cargan aparte (CLI/consola), **nunca** en el repo, en `.tf`/`tfvars` ni en el state. En dev se usa `.env` local (git-ignored).
+- **Riesgo que mitiga:** filtración de credenciales por el repo, el state o el código.
 - **Requerimiento:** RNF-07.
+- **Nota:** las credenciales SMTP reales que aparecían en un `.env.example` histórico deben **rotarse** (estuvieron en un repo).
 
 ### DS-08 Auditoría
 - **Decisión:** `AuditEvent` inmutable que registra login, reset, confirmación, altas/bajas, **acceso a datos clínicos**, generación de planes IA (con prompt/modelo/versión/costo), export/compartición de PDF, cambios de config y acciones de super admin.

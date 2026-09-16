@@ -90,14 +90,15 @@ Los IDs `RF-*` / `RNF-*` refieren a `REQUERIMIENTOS.md`.
 
 ---
 
-## Infra & Deploy (GCP + Terraform)
-- [ ] Terraform: VPC, subnet, firewall, IP estática, Compute Engine, disco de datos, service account (RNF-14)
-- [ ] `startup.sh`: Docker + Compose en la VM
+## Infra & Deploy (GCP serverless + Terraform)
+Ver `INFRAESTRUCTURA.md` (arquitectura serverless).
+- [ ] Terraform: Artifact Registry, Cloud Run (API), Cloud SQL, buckets GCS (front + media), HTTPS LB + Cloud CDN, Cloud Tasks, service accounts/IAM (RNF-14)
+- [ ] Secret Manager: contenedores por Terraform + carga de valores aparte (RNF-07)
+- [ ] Endpoint interno autenticado (OIDC) para procesar Cloud Tasks (reemplaza worker Celery)
 - [ ] Bucket de state de Terraform
-- [ ] Secretos fuera del repo/state (`.env` en la VM o Secret Manager) (RNF-07)
-- [ ] TLS + Cloudflare delante del origen
-- [ ] Política de snapshots del disco
-- [ ] CI/CD (build + push de imágenes + deploy)
+- [ ] Migraciones como job de release en Cloud Run
+- [ ] Deploy del frontend a GCS + invalidación de CDN
+- [ ] CI/CD (build imagen → Artifact Registry → Cloud Run; build SPA → GCS)
 
 ---
 
