@@ -4,7 +4,7 @@ locals {
   # Config no sensible que recibe el contenedor.
   run_env = {
     DJANGO_SETTINGS_MODULE = "config.settings.prod"
-    ALLOWED_HOSTS          = var.domain
+    ALLOWED_HOSTS          = "${var.domain},.run.app"
     CORS_ALLOWED_ORIGINS   = "https://${var.domain}"
     APP_FRONTEND_URL       = "https://${var.domain}"
     APP_BACKEND_URL        = "https://${var.domain}"
@@ -120,6 +120,11 @@ resource "google_cloud_run_v2_service" "api" {
     }
   }
 
+  # La imagen la gestiona el pipeline / deploy manual; Terraform no la pisa.
+  lifecycle {
+    ignore_changes = [template[0].containers[0].image]
+  }
+
   depends_on = [google_project_service.enabled]
 }
 
@@ -181,6 +186,10 @@ resource "google_cloud_run_v2_job" "migrate" {
         }
       }
     }
+  }
+
+  lifecycle {
+    ignore_changes = [template[0].template[0].containers[0].image]
   }
 
   depends_on = [google_project_service.enabled]
