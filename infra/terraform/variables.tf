@@ -56,3 +56,8 @@ variable "github_repo" {
   default     = "lvazquezmartinez/nutrilius"
   description = "owner/repo autorizado para desplegar vía Workload Identity Federation"
 }
+
+variable "email_dns_challenge" {
+  type        = string
+  description = "Valor del TXT _estr-challenge (verificación de dominio en envialosimple)"
+}
