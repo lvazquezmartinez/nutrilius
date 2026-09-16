@@ -7,7 +7,7 @@ description: Central reference for the Nutrilius project — what it is, its mod
 
 Nutrilius es un **SaaS multi-tenant para profesionales de nutrición** (Argentina, español rioplatense) y es el **TFG (tesis)** de Lisandro. Su diferencial es la **asistencia de IA supervisada** para armar planes alimentarios: la IA propone, un motor de reglas la acota y un profesional aprueba.
 
-Se está **reconstruyendo desde cero** en `Python + Django + Django REST Framework` + PostgreSQL (una Django app por módulo), con frontend React (activo reutilizable) e infra en GCP Compute Engine + Terraform. No es un port de versiones previas (hubo una en Spring Boot+MySQL y otra en .NET); esas son referencia funcional, no código a portar.
+Se está **reconstruyendo desde cero** en `Python + Django + Django REST Framework` + PostgreSQL (una Django app por módulo), con frontend React (activo reutilizable) e **infra serverless en GCP + Terraform** (Cloud Run, Cloud SQL, GCS + Cloud CDN para el front, Cloud Tasks, Secret Manager). No es un port de versiones previas (hubo una en Spring Boot+MySQL y otra en .NET); esas son referencia funcional, no código a portar. El repo es `github.com/lvazquezmartinez/nutrilius` (`main` = Django; `legacy-springboot` = versión vieja).
 
 ## Cómo usar esta skill
 

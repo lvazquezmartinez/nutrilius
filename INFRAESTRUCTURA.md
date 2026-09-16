@@ -1,12 +1,13 @@
 # Infraestructura — Nutrilius
 
-Documento de infraestructura y despliegue. Describe cómo se aloja y opera
-Nutrilius en **Google Cloud Platform (GCP)** usando **Compute Engine** como
-servidor único, aprovisionado con **Terraform** y operado con **Docker Compose**.
+Documento de infraestructura y despliegue. Nutrilius se despliega **serverless en
+Google Cloud Platform (GCP)**, aprovisionado con **Terraform**: API en **Cloud Run**,
+base en **Cloud SQL**, frontend estático en **Cloud Storage detrás de un HTTPS Load
+Balancer con Cloud CDN**, tareas async con **Cloud Tasks**, archivos en **Cloud
+Storage** y secretos en **Secret Manager**.
 
-Alineado con el lineamiento del `PROJECT_TECHNICAL_SPEC.md` §13.5: desplegable en
-contenedores, sobre un servidor propio/económico, sin depender obligatoriamente de
-servicios cloud administrados.
+Reemplaza el enfoque previo de VM única (Compute Engine): se prioriza escalar a
+cero, no administrar servidores y mantener los secretos fuera del código.
 
 ---
 
@@ -15,17 +16,14 @@ servicios cloud administrados.
 | Decisión | Elección | Motivo |
 |---|---|---|
 | Nube | **GCP** | Requisito del proyecto |
-| Cómputo | **Compute Engine (1 VM)** | Simple, barato y predecible; reusa el `docker-compose.yml` tal cual |
-| Provisioning | **Terraform** | Infraestructura como código, versionada y reproducible |
-| Orquestación | **Docker Compose** | Un solo host; sin complejidad de Kubernetes |
-| TLS / borde | **Cloudflare Proxy** | TLS gestionado, oculta la IP de origen, absorbe tráfico básico |
-| Región | `southamerica-east1` (São Paulo) | La más cercana a Argentina (menor latencia) |
-
-**Por qué una sola VM y no Cloud Run + servicios administrados:** para un prototipo
-de tesis, Compute Engine da control total y costo bajo/predecible. Los servicios
-administrados (Cloud SQL, Memorystore) suman costo fijo mensual corran o no, y
-Celery encaja mal en Cloud Run. La evolución a servicios administrados queda
-planteada en §9, no como requisito inicial.
+| API | **Cloud Run** (contenedor) | Serverless, escala a cero, reusa el Dockerfile |
+| Base de datos | **Cloud SQL (PostgreSQL)** | Estado gestionado; Cloud Run es stateless |
+| Frontend | **GCS + HTTPS LB + Cloud CDN** | SPA estático servido por la CDN de Google (equivalente a CloudFront) |
+| Tareas async | **Cloud Tasks → Cloud Run** | Serverless; sin Redis/RabbitMQ ni worker siempre encendido |
+| Archivos | **Cloud Storage (GCS)** | Logos y PDFs; reemplaza MinIO |
+| Secretos | **Secret Manager** | Inyectados en Cloud Run; nunca en repo/código/state |
+| IaC | **Terraform** | Infra reproducible y versionada |
+| Región | `southamerica-east1` (São Paulo) | Cercanía a Argentina |
 
 ---
 
@@ -33,49 +31,46 @@ planteada en §9, no como requisito inicial.
 
 ```mermaid
 flowchart TB
-  U[Usuarios / pacientes] --> CF[Cloudflare Proxy\nTLS + DNS + WAF básico]
-  CF --> IP[IP pública estática]
-  subgraph GCP["GCP — proyecto Nutrilius"]
-    subgraph VPC["VPC + subnet"]
-      IP --> FW[Firewall\n80/443 público · 22 restringido]
-      FW --> VM["Compute Engine e2-medium\nDebian + Docker + Compose"]
-      subgraph STACK["Docker Compose en la VM"]
-        NG[Nginx] --> FE[Frontend React]
-        NG --> BE[Backend Django + Gunicorn]
-        BE --> PG[(PostgreSQL)]
-        BE --> RD[(Redis)]
-        BE --> MQ[(RabbitMQ)]
-        BE --> MI[(MinIO)]
-        WK[Worker Celery] --> RD
-        WK --> MQ
-      end
-      VM --- PD[(Disco persistente\ndatos de PG/Redis/MinIO)]
-    end
-    SNAP[Snapshots programados del disco]
-    PD -.-> SNAP
-  end
-  BE -.->|API LLM| AI[OpenAI / OpenRouter]
-  BE -.->|SMTP| MAIL[Proveedor de email]
+  U[Usuarios / pacientes] --> LB[HTTPS Load Balancer + Cloud CDN]
+  LB -->|/ estático| GCSF[(GCS: bucket del frontend\nSPA React)]
+  LB -->|/api| RUN[Cloud Run: API Django]
+
+  RUN --> SQL[(Cloud SQL\nPostgreSQL)]
+  RUN --> GCSM[(GCS: media\nlogos, PDFs)]
+  RUN -->|lee secretos| SM[Secret Manager]
+  RUN -->|encola| TASKS[Cloud Tasks]
+  TASKS -->|HTTP OIDC| RUN
+
+  RUN -.->|API LLM| AI[OpenAI / OpenRouter]
+  RUN -.->|SMTP / API mail| MAIL[Proveedor de email]
+
+  AR[(Artifact Registry\nimagen del backend)] --> RUN
 ```
+
+Flujo: el Load Balancer sirve el SPA desde GCS por la CDN y enruta `/api/*` a Cloud
+Run. La API usa Cloud SQL, guarda binarios en GCS, lee secretos de Secret Manager y
+delega trabajo diferido (mails, PDFs, generación IA) encolando en Cloud Tasks, que
+reingresa por HTTP autenticado a un endpoint interno de la misma API.
 
 ---
 
-## 3. Recursos de GCP (gestionados por Terraform)
+## 3. Componentes (gestionados por Terraform)
 
 | Recurso | Terraform | Descripción |
 |---|---|---|
-| VPC + subnet | `google_compute_network`, `google_compute_subnetwork` | Red aislada del proyecto |
-| Firewall | `google_compute_firewall` | Permite 80/443 desde internet; 22 (SSH) solo desde IP admin |
-| IP estática | `google_compute_address` | IP pública fija para apuntar el DNS/Cloudflare |
-| Instancia | `google_compute_instance` | VM `e2-medium` (2 vCPU / 4 GB), Debian 12, Docker preinstalado |
-| Disco de datos | `google_compute_disk` + attach | Disco persistente aparte para los volúmenes de datos |
-| Service account | `google_service_account` | Identidad de la VM con permisos mínimos |
-| Snapshots | `google_compute_resource_policy` | Política de backup automático del disco |
-| Estado remoto | bucket `google_storage_bucket` | Backend de Terraform (state versionado y bloqueado) |
+| Artifact Registry | `google_artifact_registry_repository` | Registro de la imagen del backend |
+| Cloud Run (API) | `google_cloud_run_v2_service` | Servicio Django; escala a cero; SA propia |
+| Cloud SQL | `google_sql_database_instance` + `_database` + `_user` | PostgreSQL gestionado |
+| Bucket frontend | `google_storage_bucket` | SPA estático (index + assets) |
+| Bucket media | `google_storage_bucket` | Logos y PDFs (privados, URLs firmadas) |
+| HTTPS LB + CDN | `google_compute_*` (backend bucket + backend service Cloud Run, URL map, cert) | Un dominio: `/` → bucket, `/api` → Cloud Run, con Cloud CDN |
+| Cloud Tasks | `google_cloud_tasks_queue` | Cola de tareas diferidas |
+| Secret Manager | `google_secret_manager_secret` (+ IAM) | Contenedores de secretos (sin valores en Terraform) |
+| Service Accounts | `google_service_account` + IAM | Identidades mínimas para Cloud Run y Cloud Tasks |
+| Estado remoto | bucket `google_storage_bucket` | Backend de Terraform (state versionado) |
 
-> **Datos que NO van en Terraform:** contraseñas, `JWT_SECRET`, `AI_API_KEY`,
-> credenciales SMTP. Viven en el archivo `.env` **dentro de la VM** (o en Secret
-> Manager en una etapa posterior), nunca en el código ni en el state.
+> **Secretos:** Terraform crea los *contenedores* en Secret Manager, pero **los
+> valores se cargan aparte** (CLI/consola), nunca en `.tf`, `tfvars` ni en el state.
 
 ---
 
@@ -83,110 +78,102 @@ flowchart TB
 
 ```
 infra/terraform/
-  versions.tf     # provider google, versión de Terraform, backend GCS del state
-  variables.tf    # project_id, region, zone, machine_type, ssh_admin_cidr, ...
-  network.tf      # VPC, subnet, reglas de firewall
-  compute.tf      # instancia Compute Engine, disco de datos, IP estática, SA
-  backups.tf      # política de snapshots del disco
-  startup.sh      # cloud-init: instala Docker + Compose y prepara el host
-  outputs.tf      # IP pública y comando SSH
-  terraform.tfvars.example  # valores de ejemplo (sin secretos)
+  versions.tf     # provider google, backend GCS del state
+  variables.tf    # project_id, region, dominio, tier de Cloud SQL, ...
+  artifact.tf     # Artifact Registry
+  run.tf          # Cloud Run (API) + SA + acceso a Secret Manager y Cloud SQL
+  sql.tf          # Cloud SQL instance + database + user
+  storage.tf      # buckets front y media
+  loadbalancer.tf # HTTPS LB + Cloud CDN (URL map: / -> bucket, /api -> Run)
+  tasks.tf        # Cloud Tasks queue + SA con OIDC hacia Cloud Run
+  secrets.tf      # contenedores en Secret Manager + bindings IAM
+  outputs.tf      # URL del LB, del servicio Run, nombre de instancia SQL
 ```
 
 ### Variables principales
 
 | Variable | Ejemplo | Descripción |
 |---|---|---|
-| `project_id` | `nutrilius-prod` | ID del proyecto de GCP |
+| `project_id` | `nutrilius-prod` | Proyecto de GCP |
 | `region` | `southamerica-east1` | Región |
-| `zone` | `southamerica-east1-b` | Zona de la VM |
-| `machine_type` | `e2-medium` | Tipo de máquina (mínimo cómodo para el stack completo) |
-| `data_disk_gb` | `30` | Tamaño del disco de datos |
-| `ssh_admin_cidr` | `<tu-ip>/32` | IP autorizada para SSH |
-| `image_family` | `debian-12` | Imagen base |
+| `domain` | `nutrilius.com.ar` | Dominio del LB / certificado |
+| `image` | `...-docker.pkg.dev/.../backend:TAG` | Imagen del backend |
+| `sql_tier` | `db-f1-micro` (o `db-g1-small`) | Tamaño de Cloud SQL |
+| `run_min_instances` | `0` | Escala a cero |
+| `run_max_instances` | `4` | Techo de escalado |
 
 ---
 
 ## 5. Flujo de despliegue
 
-**Requisitos previos (una vez):**
-1. Proyecto de GCP con **billing habilitado**.
-2. `gcloud` autenticado:
+**Requisitos previos (una vez):** proyecto GCP con billing; `gcloud` autenticado
+(`gcloud auth application-default login`); APIs habilitadas (Cloud Run, Cloud SQL,
+Artifact Registry, Cloud Tasks, Secret Manager, Compute); bucket para el state.
+
+**1) Cargar secretos** (una vez, fuera de Terraform):
 
 ```bash
-gcloud auth application-default login
+printf '%s' "$DJANGO_SECRET_KEY" | gcloud secrets create django-secret-key --data-file=-
 ```
 
-3. APIs habilitadas: Compute Engine, Cloud Storage.
-4. Bucket para el state de Terraform (o crearlo con Terraform en un bootstrap).
-
-**Aprovisionar la infraestructura:**
+**2) Aprovisionar infra:**
 
 ```bash
-cd infra/terraform
-terraform init
-terraform plan -out plan.tfplan
-terraform apply plan.tfplan
+cd infra/terraform && terraform init && terraform apply
 ```
 
-**Desplegar la aplicación (dentro de la VM):**
-1. Conectarse por SSH (el `outputs.tf` imprime el comando).
-2. Clonar el repositorio.
-3. Crear el archivo `.env` con los valores reales de producción.
-4. Levantar el stack:
+**3) Build & deploy del backend** (imagen → Artifact Registry → Cloud Run):
 
 ```bash
-docker compose up -d --build
+gcloud builds submit backend --tag "$IMAGE" && gcloud run deploy nutrilius-api --image "$IMAGE"
 ```
 
-El `startup.sh` deja Docker y Docker Compose ya instalados, así que el primer
-`up` es lo único manual. Automatizar este paso (CI/CD con GitHub Actions) queda
-como mejora futura.
+**4) Deploy del frontend** (build del SPA → bucket → invalidar CDN):
+
+```bash
+cd frontend && npm run build && gcloud storage rsync -r dist "gs://$FRONT_BUCKET"
+```
+
+En Cloud Run, `DJANGO_SETTINGS_MODULE=config.settings.prod`, migraciones vía job de
+release (`python manage.py migrate`), y los secretos se referencian desde Secret
+Manager (`--set-secrets`).
 
 ---
 
 ## 6. Seguridad
 
-- **Firewall:** 80/443 abiertos; SSH (22) restringido a la IP del administrador (`ssh_admin_cidr`).
-- **TLS:** terminado en Cloudflare (o Let's Encrypt vía Nginx si no se usa Cloudflare).
-- **Origen oculto:** Cloudflare Proxy delante del dominio evita exponer la IP directa.
-- **Secretos:** fuera del repo y del state; en `.env` de la VM o Secret Manager.
-- **Service account:** con el mínimo de permisos necesarios.
-- **Datos sensibles de salud:** el disco persistente puede cifrarse con CMEK;
-  backups por snapshot; acceso auditado a nivel aplicación (ver spec §13.2).
-- **Actualizaciones:** parcheo del SO y de imágenes de contenedor de forma periódica.
+- **Secretos en Secret Manager** (DS-07): DB, `DJANGO_SECRET_KEY`, API de IA, SMTP. Cloud Run los recibe como env/volúmenes; nunca en repo ni state.
+- **Cloud SQL** sin IP pública (conector de Cloud Run) o con IP autorizada + Auth Proxy; contraseña en Secret Manager.
+- **Buckets privados**: el de media no es público; se sirve con **URLs firmadas** y expiración (compartición de PDF revocable, RNF-05).
+- **Cloud Tasks con OIDC**: el reingreso a la API va autenticado por service account; el endpoint interno rechaza llamadas sin token.
+- **TLS gestionado** por el Load Balancer (certificado administrado por Google); CORS/CSP estrictos.
+- **IAM de mínimo privilegio** por service account (Run, Tasks).
+- **Datos de salud**: Cloud SQL cifra en reposo; acceso auditado a nivel app (RNF-02/03).
 
 ---
 
-## 7. Backups y recuperación
-
-- **Snapshots automáticos** del disco de datos (política diaria, retención configurable).
-- **Dump lógico de PostgreSQL** (`pg_dump`) programado como tarea, subido a Cloud Storage.
-- Recuperación: recrear la VM con Terraform y re-adjuntar el disco / restaurar snapshot.
-
----
-
-## 8. Costos estimados (orden de magnitud)
+## 7. Costos estimados (orden de magnitud)
 
 | Ítem | Estimado mensual (USD) |
 |---|---|
-| Compute Engine `e2-medium` (on-demand) | ~25–30 |
-| Disco persistente 30 GB | ~1.5 |
-| IP estática | ~3 (si la VM está encendida, suele ser gratis) |
-| Egress / tráfico | bajo para prototipo |
-| Cloudflare | Free tier |
-| **Total aproximado** | **~30–35** |
+| Cloud Run (escala a cero, tráfico bajo) | ~0–5 |
+| Cloud SQL `db-f1-micro` | ~9–15 (costo fijo) |
+| GCS + Cloud CDN (SPA + media) | ~1–3 |
+| HTTPS Load Balancer | ~18 (regla de forwarding) |
+| Cloud Tasks / Secret Manager | ~0 (free tier) |
+| **Total aproximado** | **~30–40** |
 
-Con `e2-micro` (free tier) el costo baja, pero 1 GB de RAM es insuficiente para
-todo el stack junto. `e2-medium` es el mínimo cómodo.
+El costo fijo principal pasa a ser Cloud SQL y el Load Balancer. Cloud Run y Tasks
+son casi gratis en idle. Sin Memorystore (se evita a propósito usando Cloud Tasks).
 
 ---
 
-## 9. Evolución futura (no requerido en el prototipo)
+## 8. Trade-offs asumidos
 
-- **PostgreSQL → Cloud SQL** (backups y alta disponibilidad administrados).
-- **MinIO → Cloud Storage (GCS)** vía `django-storages`.
-- **Redis → Memorystore.**
-- **VM única → Cloud Run** para la API y el front, dejando datos en servicios administrados.
-- **CI/CD:** build y push de imágenes + deploy automático desde GitHub Actions.
-- **Observabilidad:** Cloud Logging / Monitoring por servicio.
+- **Cloud SQL y el LB tienen costo fijo** aunque no haya tráfico (a diferencia de una
+  VM apagada). A cambio: cero administración y escalado automático.
+- **Sin Redis/Celery**: las tareas diferidas usan Cloud Tasks; hay que exponer un
+  endpoint interno autenticado en la API para procesarlas (reemplaza al worker).
+- **Cold starts** de Cloud Run en tráfico esporádico (aceptable para el prototipo;
+  mitigable con `min_instances=1` a costo).
+- **No hay uso clínico real** con pacientes reales: es un prototipo.
