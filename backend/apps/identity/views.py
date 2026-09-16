@@ -4,16 +4,19 @@ from rest_framework import generics, status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 
 from apps.audit.models import AuditEvent
 from apps.audit.services import log_event
 from apps.tenants.models import Tenant
 
+from .google import GoogleAuthError, verify_google_token
 from .models import EmailVerificationToken, PasswordResetToken, Role, User
 from .permissions import IsTenantAdmin
 from .serializers import (
     EmailTokenObtainPairSerializer,
+    GoogleRegisterSerializer,
     RegisterSerializer,
     RequestResetSerializer,
     ResetSerializer,
@@ -21,6 +24,16 @@ from .serializers import (
     UserSerializer,
 )
 from .tasks import send_password_reset_email, send_verification_email
+
+
+def _tokens_for(user):
+    """Emite el par access/refresh + datos del usuario (mismo formato que el login)."""
+    refresh = RefreshToken.for_user(user)
+    return {
+        "access": str(refresh.access_token),
+        "refresh": str(refresh),
+        "user": UserSerializer(user).data,
+    }
 
 
 class RegisterView(APIView):
@@ -85,6 +98,61 @@ class LoginView(TokenObtainPairView):
             user = User.objects.filter(email__iexact=request.data.get("email", "")).first()
             log_event(AuditEvent.Action.LOGIN, actor=user, request=request)
         return response
+
+
+class GoogleLoginView(APIView):
+    """Login con Google. Si el usuario no existe, indica que falta registrarse."""
+
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        try:
+            data = verify_google_token(request.data.get("credential", ""))
+        except GoogleAuthError as exc:
+            return Response({"detail": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+
+        user = User.objects.filter(email__iexact=data["email"], is_active=True).first()
+        if user is None:
+            # El frontend muestra el formulario de registro con estos datos precargados.
+            return Response({"needs_registration": True, **data})
+
+        log_event(AuditEvent.Action.LOGIN, actor=user, request=request,
+                  metadata={"via": "google"})
+        return Response(_tokens_for(user))
+
+
+class GoogleRegisterView(APIView):
+    """Registro de consultorio con Google + formulario para completar lo que falta."""
+
+    permission_classes = [AllowAny]
+
+    @transaction.atomic
+    def post(self, request):
+        serializer = GoogleRegisterSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        try:
+            data = verify_google_token(serializer.validated_data["credential"])
+        except GoogleAuthError as exc:
+            return Response({"detail": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+
+        if User.objects.filter(email__iexact=data["email"]).exists():
+            return Response({"detail": "Ya existe una cuenta con ese email."},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        tenant = Tenant.objects.create(name=serializer.validated_data["business_name"])
+        user = User.objects.create_user(
+            email=data["email"],
+            password=None,  # sin contraseña: entra por Google (o setea una vía reset)
+            first_name=serializer.validated_data.get("first_name") or data["first_name"],
+            last_name=serializer.validated_data.get("last_name") or data["last_name"],
+            role=Role.ADMIN,
+            tenant=tenant,
+            email_verified=True,  # Google ya verificó el email
+        )
+        log_event(AuditEvent.Action.TENANT_REGISTERED, actor=user, tenant_id=tenant.id,
+                  entity="Tenant", entity_id=tenant.id, request=request,
+                  metadata={"via": "google"})
+        return Response(_tokens_for(user), status=status.HTTP_201_CREATED)
 
 
 class MeView(APIView):

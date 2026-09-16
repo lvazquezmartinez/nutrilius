@@ -1,11 +1,6 @@
 output "load_balancer_ip" {
   value       = google_compute_global_address.lb.address
-  description = "IP del Load Balancer. Apuntá el DNS del dominio acá (o usá la zona de Cloud DNS)."
-}
-
-output "dns_name_servers" {
-  value       = google_dns_managed_zone.main.name_servers
-  description = "Nameservers a cargar en DonWeb para delegar el DNS a Cloud DNS."
+  description = "IP del Load Balancer. Crear un registro A en DonWeb (dominio -> esta IP). NO cambiar nameservers."
 }
 
 output "api_service_url" {

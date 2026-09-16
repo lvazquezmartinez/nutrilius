@@ -58,7 +58,8 @@ graph TD
 **Usado por:** todos los módulos (identidad del actor y rol).
 **Reglas clave:** sin email confirmado no hay login; tokens firmados con expiración corta (RNF-05); hashing con el hasher de Django; `simplejwt` para JWT+refresh.
 **Requerimientos:** RF-01..06.
-**Tests ✅** (`apps/identity/tests/`): registro crea tenant+admin sin verificar y rechaza email duplicado; login bloqueado sin confirmar; confirm→login OK; token de verificación de un solo uso e inválido; `/me` requiere auth; reset de contraseña completo y anti-enumeración; alta/listado/toggle de usuarios internos con permiso por rol, aislamiento entre tenants y prohibición de auto-desactivarse; registro de eventos de auditoría.
+**Login con Google:** además del email/contraseña, `POST /api/auth/google` (login: verifica el ID token y emite JWT; si no existe el usuario, responde `needs_registration`) y `POST /api/auth/google/register` (registro de consultorio con Google + formulario para el nombre del consultorio; email ya verificado por Google, sin contraseña). Registro abierto a cualquiera.
+**Tests ✅** (`apps/identity/tests/`): registro crea tenant+admin sin verificar y rechaza email duplicado; login bloqueado sin confirmar; confirm→login OK; token de verificación de un solo uso e inválido; `/me` requiere auth; reset de contraseña completo y anti-enumeración; alta/listado/toggle de usuarios internos con permiso por rol, aislamiento entre tenants y prohibición de auto-desactivarse; registro de eventos de auditoría; **login/registro con Google** (usuario existente, nuevo→needs_registration, alta de consultorio, email duplicado, token inválido) con la verificación mockeada.
 
 ## 2. Tenant Management
 **Propósito:** representar cada consultorio como unidad aislada y su configuración comercial.

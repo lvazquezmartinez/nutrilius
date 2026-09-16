@@ -164,6 +164,9 @@ DEFAULT_FROM_EMAIL = env("SMTP_FROM", default="no-reply@nutrilius.com.ar")
 APP_FRONTEND_URL = env("APP_FRONTEND_URL", default="http://localhost:3000")
 APP_BACKEND_URL = env("APP_BACKEND_URL", default="http://localhost:8000")
 
+# Login con Google (Sign in with Google). Client ID de tipo "Web application".
+GOOGLE_OAUTH_CLIENT_ID = env("GOOGLE_OAUTH_CLIENT_ID", default="")
+
 # Vencimientos de tokens de acción (horas)
 EMAIL_VERIFICATION_TTL_HOURS = env.int("EMAIL_VERIFICATION_TTL_HOURS", default=48)
 PASSWORD_RESET_TTL_HOURS = env.int("PASSWORD_RESET_TTL_HOURS", default=2)
