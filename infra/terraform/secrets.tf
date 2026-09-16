@@ -10,6 +10,7 @@ locals {
     "ai-api-key",
     "smtp-user",
     "smtp-password",
+    "google-oauth-client-id",
   ]
 }
 

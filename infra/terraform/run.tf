@@ -21,9 +21,10 @@ locals {
   run_secret_env = {
     POSTGRES_PASSWORD = google_secret_manager_secret.db_password.secret_id
     DJANGO_SECRET_KEY = "django-secret-key"
-    AI_API_KEY        = "ai-api-key"
-    SMTP_USER         = "smtp-user"
-    SMTP_PASSWORD     = "smtp-password"
+    AI_API_KEY             = "ai-api-key"
+    SMTP_USER              = "smtp-user"
+    SMTP_PASSWORD          = "smtp-password"
+    GOOGLE_OAUTH_CLIENT_ID = "google-oauth-client-id"
   }
 
   all_secret_ids = concat(local.manual_secret_ids, ["db-password"])
