@@ -25,7 +25,7 @@ Se está **reconstruyendo desde cero** en `Python + Django + Django REST Framewo
 | `REQUERIMIENTOS.md` | Requerimientos funcionales (RF/RF-IA) y no funcionales (RNF), con IDs citables. |
 | `CASOS_DE_USO_Y_FLUJOS.md` | Actores, casos de uso y flujos de negocio (Mermaid), incl. proceso integrador. |
 | `PROJECT_TECHNICAL_SPEC.md` | Spec funcional completa + recomendaciones de arquitectura (§12 stack, §12.3 bounded contexts). |
-| `INFRAESTRUCTURA.md` | Deploy: GCP Compute Engine + Terraform + Docker Compose + Cloudflare. |
+| `INFRAESTRUCTURA.md` | Deploy serverless: Cloud Run + Cloud SQL + GCS/Cloud CDN + Cloud Tasks + Secret Manager, con Terraform. |
 | `V1_PLAN.md` | Plan de reconstrucción por fases (0 a 6). Estado de avance. |
 
 ## Mapa de módulos

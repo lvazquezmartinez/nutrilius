@@ -27,6 +27,18 @@ frontend/dist/
 frontend/build/
 .vite/
 
+# ─── Terraform ───────────────────────────────────────────
+**/.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+*.tfvars
+!*.tfvars.example
+.terraform.lock.hcl
+
+# ─── Claude Code (config local del usuario) ──────────────
+.claude/settings.local.json
+
 # ─── Legacy (.NET viejo, referencia local, no se versiona) ─
 legacy/
 

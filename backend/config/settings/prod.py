@@ -20,16 +20,14 @@ SECURE_CONTENT_TYPE_NOSNIFF = True
 # Detrás de Cloudflare/Nginx: confiar en el header de proto reenviado.
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
-# ─── Storage S3-compatible (MinIO / GCS) ─────────────────
+# ─── Storage: Google Cloud Storage (DT-08) ───────────────
+# Bucket privado; los binarios (logos, PDFs) se sirven con URLs firmadas (RNF-05).
 STORAGES = {
     "default": {
-        "BACKEND": "storages.backends.s3.S3Storage",
+        "BACKEND": "storages.backends.gcloud.GoogleCloudStorage",
         "OPTIONS": {
-            "access_key": env("S3_ACCESS_KEY", default=""),
-            "secret_key": env("S3_SECRET_KEY", default=""),
-            "bucket_name": env("S3_BUCKET", default="nutrilius"),
-            "endpoint_url": env("S3_ENDPOINT_URL", default=None),
-            "region_name": env("S3_REGION", default=""),
+            "bucket_name": env("GS_BUCKET_NAME"),
+            "default_acl": None,
             "querystring_auth": True,
         },
     },

@@ -1,0 +1,104 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  # ─── Validaciones + tests (runner gratis de GitHub) ──────
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: nutrilius
+          POSTGRES_USER: nutrilius_user
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U nutrilius_user"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DJANGO_SETTINGS_MODULE: config.settings.test
+      DJANGO_SECRET_KEY: ci-secret-key-not-used-in-prod
+      POSTGRES_HOST: localhost
+      POSTGRES_PORT: "5432"
+      POSTGRES_DB: nutrilius
+      POSTGRES_USER: nutrilius_user
+      POSTGRES_PASSWORD: postgres
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: backend/requirements-dev.txt
+
+      - name: Instalar dependencias
+        run: pip install -r requirements-dev.txt
+
+      - name: Django system check
+        run: python manage.py check
+
+      - name: Validar que no falten migraciones
+        run: python manage.py makemigrations --check --dry-run
+
+      - name: Tests (pytest)
+        run: pytest
+
+  # ─── Build + push a Artifact Registry + deploy a Cloud Run ─
+  build-deploy:
+    needs: test
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      id-token: write # necesario para Workload Identity Federation
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: auth
+        name: Autenticación a GCP (sin llaves)
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.WIF_PROVIDER }}
+          service_account: ${{ vars.CICD_SERVICE_ACCOUNT }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configurar Docker para Artifact Registry
+        run: gcloud auth configure-docker ${{ vars.GCP_REGION }}-docker.pkg.dev --quiet
+
+      - name: Build & push de la imagen
+        run: |
+          IMAGE="${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ vars.AR_REPO }}/backend:${{ github.sha }}"
+          docker build -t "$IMAGE" ./backend
+          docker push "$IMAGE"
+          echo "IMAGE=$IMAGE" >> "$GITHUB_ENV"
+
+      - name: Migraciones (Cloud Run job)
+        run: |
+          gcloud run jobs update ${{ vars.MIGRATE_JOB }} \
+            --image "$IMAGE" --region ${{ vars.GCP_REGION }} --quiet
+          gcloud run jobs execute ${{ vars.MIGRATE_JOB }} \
+            --region ${{ vars.GCP_REGION }} --wait
+
+      - name: Deploy a Cloud Run
+        run: |
+          gcloud run deploy ${{ vars.RUN_SERVICE }} \
+            --image "$IMAGE" --region ${{ vars.GCP_REGION }} --quiet
