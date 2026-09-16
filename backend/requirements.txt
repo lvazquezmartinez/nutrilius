@@ -1,0 +1,26 @@
+# Nutrilius backend — Django + DRF
+# Producción / base. Python 3.12+.
+
+Django>=5.1,<5.2
+djangorestframework>=3.15,<3.16
+djangorestframework-simplejwt>=5.3,<5.4
+django-environ>=0.11,<0.12
+django-cors-headers>=4.4,<4.5
+django-filter>=24.3
+
+# Base de datos (psycopg 3)
+psycopg[binary]>=3.2,<3.3
+
+# Cache / broker
+redis>=5.0,<6.0
+django-redis>=5.4,<5.5
+
+# Tareas async
+celery>=5.4,<5.5
+
+# Storage S3-compatible (MinIO / GCS)
+django-storages>=1.14,<1.15
+boto3>=1.35
+
+# Servidor
+gunicorn>=23.0
