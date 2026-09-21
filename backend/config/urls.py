@@ -8,5 +8,6 @@ urlpatterns = [
     path("api/", include("apps.identity.urls")),     # Fase 1: auth + usuarios
     path("api/", include("apps.clinical.urls")),      # Fase 2: pacientes, anamnesis, métricas, evoluciones
     path("api/", include("apps.scheduling.urls")),    # Fase 2: agenda / visitas
+    path("api/", include("apps.dashboard.urls")),     # dashboard (métricas del tenant)
     # ...
 ]

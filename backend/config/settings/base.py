@@ -50,6 +50,7 @@ LOCAL_APPS = [
     "apps.identity",
     "apps.clinical",
     "apps.scheduling",
+    "apps.dashboard",
     # "apps.billing",        # Fase 3
     # "apps.plans",          # Fase 4
     # "apps.ai",             # Fase 4
