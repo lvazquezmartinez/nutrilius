@@ -5,6 +5,7 @@ import { clsx } from 'clsx'
 import { evolutionsService } from '@/services/clinicalEvolutions'
 import type { ClinicalEvolution, CreateEvolutionRequest } from '@/types/clinicalEvolution'
 import { Button } from '@/components/ui/Button'
+import { MetricTrendChart } from './MetricTrendChart'
 
 // ── form ──────────────────────────────────────────────────────────────────────
 type FormValues = {
@@ -372,6 +373,10 @@ export function EvolutionsTab({ patientId }: { patientId: string }) {
           <p className="text-sm font-medium">Sin evoluciones registradas</p>
           <p className="text-xs mt-1">Registrá la primera consulta clínica</p>
         </div>
+      )}
+
+      {!isLoading && evolutions.length > 0 && (
+        <MetricTrendChart evolutions={evolutions} />
       )}
 
       {!isLoading && evolutions.length > 0 && (
