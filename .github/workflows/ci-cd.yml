@@ -3,21 +3,44 @@ name: CI/CD
 on:
   push:
     branches: [main]
-    # Solo corre cuando cambia el backend o el propio workflow.
-    # El frontend se despliega aparte (rsync a GCS + invalidación de CDN),
-    # así que cambios solo-front no rebuildean ni redeployan la API.
-    paths:
-      - 'backend/**'
-      - '.github/workflows/ci-cd.yml'
+    tags: ['v*.*.*']        # release-driven: un tag SemVer dispara el deploy versionado
   pull_request:
     branches: [main]
-    paths:
-      - 'backend/**'
-      - '.github/workflows/ci-cd.yml'
 
 jobs:
+  # ─── Detecta si hay que correr (backend cambiado o release por tag) ──
+  # Reemplaza al filtro `paths:` del trigger, que no es confiable para tags.
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      run: ${{ steps.d.outputs.run }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: d
+        name: ¿Correr el pipeline?
+        run: |
+          # Los tags (releases) siempre corren.
+          if [ "${{ github.ref_type }}" = "tag" ]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          BEFORE="${{ github.event.before }}"
+          # Primer push / evento sin base conocida → correr por las dudas.
+          if [ -z "$BEFORE" ] || [ "$BEFORE" = "0000000000000000000000000000000000000000" ]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          # Push a rama: solo si tocó backend/ o el propio workflow.
+          if git diff --name-only "$BEFORE" "${{ github.sha }}" | grep -qE '^(backend/|\.github/workflows/ci-cd\.yml)'; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          fi
+
   # ─── Validaciones + tests (runner gratis de GitHub) ──────
   test:
+    needs: changes
+    if: needs.changes.outputs.run == 'true'
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -69,9 +92,10 @@ jobs:
         run: pytest
 
   # ─── Build + push a Artifact Registry + deploy a Cloud Run ─
+  # Corre en push a main (imagen :sha) y en tags v*.*.* (imagen :version + :latest).
   build-deploy:
-    needs: test
-    if: github.ref == 'refs/heads/main'
+    needs: [changes, test]
+    if: needs.changes.outputs.run == 'true' && (github.ref == 'refs/heads/main' || github.ref_type == 'tag')
     runs-on: ubuntu-latest
     environment: main # las Variables (GCP_*, WIF_PROVIDER, ...) viven en este environment
 
@@ -96,9 +120,21 @@ jobs:
 
       - name: Build & push de la imagen
         run: |
-          IMAGE="${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ vars.AR_REPO }}/backend:${{ github.sha }}"
+          BASE="${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ vars.AR_REPO }}/backend"
+          # En tags usamos la versión (v0.2.0); en push a main, el SHA.
+          if [ "${{ github.ref_type }}" = "tag" ]; then
+            VERSION="${{ github.ref_name }}"
+          else
+            VERSION="${{ github.sha }}"
+          fi
+          IMAGE="$BASE:$VERSION"
           docker build -t "$IMAGE" ./backend
           docker push "$IMAGE"
+          # En releases marcamos además :latest para saber cuál es la última versión estable.
+          if [ "${{ github.ref_type }}" = "tag" ]; then
+            docker tag "$IMAGE" "$BASE:latest"
+            docker push "$BASE:latest"
+          fi
           echo "IMAGE=$IMAGE" >> "$GITHUB_ENV"
 
       - name: Migraciones (Cloud Run job)
