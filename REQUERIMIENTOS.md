@@ -47,16 +47,16 @@ más paciente y visitante público como actores externos.
 ### 2.3 Registro clínico
 | ID | Requerimiento | Origen |
 |---|---|---|
-| RF-10 | Anamnesis por paciente con campos estructurados: edad, sexo, peso, talla, peso habitual, % de pérdida de peso, tabaquismo, nivel de actividad, comidas por día, **patologías, restricciones, alergias, hábitos y objetivo**. | H |
-| RF-11 | Plantilla de anamnesis configurable por tenant (JSON); la anamnesis guarda además `data_json` según la plantilla. | H |
+| RF-10 | Anamnesis clínica detallada por paciente (**una por paciente, editable/upsert**): datos generales (ocupación, motivo de consulta); antecedentes/hábitos tóxicos (medicación, alcohol, tabaquismo, síntomas digestivos); alimentación y hábitos (comidas/día, quién cocina, comer afuera, suplementos, **alergias, restricciones médico-culturales, aversiones**, comentarios); **recordatorio de 24 h** (desayuno, colación, almuerzo, merienda, cena, agua, dulces, métodos de cocción); actividad física; **antropometría** (peso, talla, cintura, cuello, cadera, brazo); comentarios finales; más `data_json`. Los campos relevantes + edad/sexo del paciente alimentan el motor de IA (RF-IA-01). | H → ampliado |
+| RF-11 | Plantilla de anamnesis configurable por tenant (JSON). | H |
 | RF-12 | Reset de la plantilla de anamnesis a la de por defecto. | H |
 | RF-13 | Métricas antropométricas por paciente en el tiempo: peso, talla, IMC, cintura, cuello, fecha de medición. | H |
-| RF-14 | Evoluciones clínicas (notas fechadas) por paciente. | H |
+| RF-14 | Evoluciones clínicas por paciente: **control fechado con antropometría/composición** (peso, talla, IMC calculado, cintura, cadera, brazo, % grasa, % músculo, presión arterial) + notas clínicas, valoración dietética y objetivos para la próxima visita. | H → ampliado |
 
 ### 2.4 Agenda y turnos
 | ID | Requerimiento | Origen |
 |---|---|---|
-| RF-15 | Turnos con fecha/hora, duración (default 45 min), estado (`SCHEDULED`/`COMPLETED`/…) y notas. | H |
+| RF-15 | Turnos con fecha/hora, duración (default 45 min), estado (`SCHEDULED`/`COMPLETED`/`CANCELLED`/`NO_SHOW`), **motivo**, notas y **fecha de cancelación**; acciones de cancelar y completar. | H → ampliado |
 | RF-16 | Vista de agenda/calendario del tenant. | H |
 | RF-17 | Marca de recordatorio enviado (`reminder_sent`) para envío de recordatorios. | H |
 

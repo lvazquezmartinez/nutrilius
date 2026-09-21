@@ -14,11 +14,12 @@ def test_anamnesis_solo_acepta_paciente_del_tenant(auth_client, make_tenant):
     mio = Patient.all_objects.create(tenant=t1, first_name="Mío")
     ajeno = Patient.all_objects.create(tenant=t2, first_name="Ajeno")
 
-    r = client.post("/api/anamneses/", {"patient": mio.id, "goal": "bajar grasa",
-                                        "weight_kg": "80.00"}, format="json")
+    r = client.post("/api/anamneses/", {
+        "patient": mio.id, "reason_for_consultation": "bajar grasa", "weight_kg": "80.00",
+    }, format="json")
     assert r.status_code == 201
 
-    r = client.post("/api/anamneses/", {"patient": ajeno.id, "goal": "x"}, format="json")
+    r = client.post("/api/anamneses/", {"patient": ajeno.id}, format="json")
     assert r.status_code == 400  # paciente de otro tenant no es válido
 
 
@@ -34,13 +35,17 @@ def test_metric_calcula_bmi_si_falta(auth_client, make_tenant):
     assert r.json()["bmi"] == "20.00"
 
 
-def test_evolution_create(auth_client, make_tenant):
+def test_evolution_create_calcula_bmi(auth_client, make_tenant):
     t1 = make_tenant("T1")
     client, _ = auth_client(email="a@t1.local", tenant=t1)
     p = Patient.all_objects.create(tenant=t1, first_name="Uno")
-    r = client.post("/api/evolutions/", {"patient": p.id, "notes": "mejoró la adherencia"},
-                    format="json")
+    r = client.post("/api/evolutions/", {
+        "patient": p.id, "date": "2026-01-15",
+        "weight_kg": "80.00", "height_cm": "200.00",
+        "clinical_notes": "mejoró la adherencia",
+    }, format="json")
     assert r.status_code == 201
+    assert r.json()["bmi"] == "20.00"  # 80 / 2.00^2
 
 
 def test_anamnesis_template_get_put_reset(auth_client, make_tenant):

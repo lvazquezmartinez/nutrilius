@@ -19,8 +19,10 @@ class Visit(TenantOwnedModel):
     duration_minutes = models.PositiveIntegerField(default=45)
     status = models.CharField(max_length=20, choices=VisitStatus.choices,
                               default=VisitStatus.SCHEDULED)
+    reason = models.CharField(max_length=255, blank=True)
     notes = models.TextField(blank=True)
     reminder_sent = models.BooleanField(default=False)
+    cancelled_at = models.DateTimeField(null=True, blank=True)
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name="+"
     )

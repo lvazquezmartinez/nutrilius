@@ -73,7 +73,7 @@ graph TD
 
 ## 3. Clinical Records
 **Propósito:** núcleo clínico: pacientes y su historia.
-**Entidades:** `Patient` (datos personales, `is_new`, baja lógica), `Anamnesis` (campos estructurados + `data_json` según plantilla), `AnamnesisTemplate` (JSON por tenant), `PatientMetric` (peso, talla, IMC, cintura, cuello, fecha), `Evolution` (notas fechadas).
+**Entidades:** `Patient` (datos personales, `is_new`, baja lógica), `Anamnesis` (**una por paciente, upsert**: generales, antecedentes/hábitos tóxicos, alimentación, recordatorio 24 h, actividad física, antropometría, comentarios + `data_json`), `AnamnesisTemplate` (JSON por tenant), `PatientMetric` (peso, talla, IMC, cintura, cuello, fecha), `Evolution` (**control fechado con antropometría/composición + IMC calculado + notas/valoración/objetivos**).
 **Responsabilidades:** CRUD de pacientes con búsqueda/paginado; carga y edición de anamnesis; plantilla de anamnesis configurable; métricas antropométricas en el tiempo; evoluciones.
 **Depende de:** Identity (autor), Tenant (aislamiento).
 **Usado por:** Scheduling, Billing, Nutrition Plans, **AI Orchestration** (la anamnesis y las métricas son los inputs del motor de reglas).
@@ -83,7 +83,7 @@ graph TD
 
 ## 4. Scheduling
 **Propósito:** agenda y turnos del consultorio.
-**Entidades:** `Visit` (paciente, fecha-hora, duración, estado `SCHEDULED`/`COMPLETED`/…, notas, `reminder_sent`).
+**Entidades:** `Visit` (paciente, fecha-hora, duración, estado `SCHEDULED`/`COMPLETED`/`CANCELLED`/`NO_SHOW`, motivo, notas, `reminder_sent`, `cancelled_at`; acciones cancelar/completar).
 **Responsabilidades:** crear/editar/cancelar turnos; vista de agenda; marcar recordatorio enviado.
 **Depende de:** Clinical (paciente), Identity, Tenant.
 **Usado por:** Billing (un pago puede asociarse a una visita); Public Portal (booking crea turnos); Messaging (recordatorios/confirmaciones).
