@@ -15,6 +15,10 @@ locals {
     GCP_PROJECT_ID         = var.project_id
     GCP_REGION             = var.region
     GCP_TASKS_QUEUE        = google_cloud_tasks_queue.default.name
+    SMTP_HOST              = "smtp.envialosimple.email"
+    SMTP_PORT              = "587"
+    SMTP_USE_TLS           = "true"
+    SMTP_FROM              = "no-reply@nutrilius.com.ar"
   }
 
   # Secretos: nombre de la env var => secret_id en Secret Manager.

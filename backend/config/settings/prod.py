@@ -8,6 +8,11 @@ DEBUG = False
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS")
 CORS_ALLOWED_ORIGINS = env.list("CORS_ALLOWED_ORIGINS")
 
+# Sin broker Celery en serverless: las tareas de email corren sincrónicas en el
+# request (envío por SMTP). Migración a Cloud Tasks = deuda técnica pendiente.
+CELERY_TASK_ALWAYS_EAGER = True
+CELERY_TASK_EAGER_PROPAGATES = False
+
 # ─── Seguridad (ver DS-05, DS-10) ────────────────────────
 SECURE_SSL_REDIRECT = env("SECURE_SSL_REDIRECT", default=True)
 SESSION_COOKIE_SECURE = True
