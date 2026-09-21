@@ -36,6 +36,19 @@ def _tokens_for(user):
     }
 
 
+def _dispatch_email(task, *args):
+    """
+    Encola una tarea de email de forma tolerante a fallos. Si no hay broker
+    disponible (serverless sin Celery), no rompe el request; la migración a
+    Cloud Tasks queda pendiente. Ver INFRAESTRUCTURA.md / deuda técnica.
+    """
+    import logging
+    try:
+        task.delay(*args)
+    except Exception:  # broker no disponible u otro fallo de encolado
+        logging.getLogger("identity").warning("No se pudo encolar %s", task.name)
+
+
 class RegisterView(APIView):
     """Alta de consultorio + usuario admin (RF-01)."""
 
@@ -58,7 +71,7 @@ class RegisterView(APIView):
             email_verified=False,
         )
         token = EmailVerificationToken.issue(user, settings.EMAIL_VERIFICATION_TTL_HOURS)
-        send_verification_email.delay(user.email, token.token)
+        _dispatch_email(send_verification_email, user.email, token.token)
         log_event(AuditEvent.Action.TENANT_REGISTERED, actor=user, tenant_id=tenant.id,
                   entity="Tenant", entity_id=tenant.id, request=request)
         return Response(
@@ -174,7 +187,7 @@ class RequestResetView(APIView):
         user = User.objects.filter(email__iexact=email, is_active=True).first()
         if user is not None:
             token = PasswordResetToken.issue(user, settings.PASSWORD_RESET_TTL_HOURS)
-            send_password_reset_email.delay(user.email, token.token)
+            _dispatch_email(send_password_reset_email, user.email, token.token)
             log_event(AuditEvent.Action.PASSWORD_RESET_REQUEST, actor=user, request=request)
         return Response({"detail": "Si el email existe, te enviamos un enlace."})
 
