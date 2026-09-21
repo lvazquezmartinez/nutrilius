@@ -3,8 +3,17 @@ name: CI/CD
 on:
   push:
     branches: [main]
+    # Solo corre cuando cambia el backend o el propio workflow.
+    # El frontend se despliega aparte (rsync a GCS + invalidación de CDN),
+    # así que cambios solo-front no rebuildean ni redeployan la API.
+    paths:
+      - 'backend/**'
+      - '.github/workflows/ci-cd.yml'
   pull_request:
     branches: [main]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/ci-cd.yml'
 
 jobs:
   # ─── Validaciones + tests (runner gratis de GitHub) ──────
