@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useAuthStore } from '@/store/authStore'
 
+import { LandingPage }        from '@/pages/landing/LandingPage'
 import { LoginPage }          from '@/pages/auth/LoginPage'
 import { RegisterPage }       from '@/pages/auth/RegisterPage'
 import { ConfirmEmailPage }   from '@/pages/auth/ConfirmEmailPage'
@@ -52,9 +53,9 @@ export default function App() {
             <Route path="/pacientes/:id"     element={<PatientDetailPage />} />
           </Route>
 
-          {/* Default */}
-          <Route path="/"  element={<Navigate to="/dashboard" replace />} />
-          <Route path="*"  element={<Navigate to="/login" replace />} />
+          {/* Landing pública */}
+          <Route path="/"  element={<LandingPage />} />
+          <Route path="*"  element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>
     </QueryClientProvider>
