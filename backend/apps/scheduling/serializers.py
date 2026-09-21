@@ -8,6 +8,7 @@ class VisitSerializer(serializers.ModelSerializer):
         model = Visit
         fields = [
             "id", "patient", "scheduled_at", "duration_minutes", "status",
-            "notes", "reminder_sent", "created_at", "updated_at",
+            "reason", "notes", "reminder_sent", "cancelled_at",
+            "created_at", "updated_at",
         ]
-        read_only_fields = ["id", "reminder_sent", "created_at", "updated_at"]
+        read_only_fields = ["id", "reminder_sent", "cancelled_at", "created_at", "updated_at"]

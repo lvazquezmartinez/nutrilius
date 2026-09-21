@@ -46,3 +46,21 @@ def test_visitas_scoped_y_filtro_por_status(auth_client, make_tenant):
 
     r = client.get("/api/visits/?status=COMPLETED")
     assert r.json()["count"] == 1
+
+
+def test_cancelar_y_completar_visita(auth_client, make_tenant):
+    t1 = make_tenant("T1")
+    client, _ = auth_client(email="a@t1.local", tenant=t1)
+    p = Patient.all_objects.create(tenant=t1, first_name="Uno")
+    v1 = Visit.all_objects.create(tenant=t1, patient=p, scheduled_at=timezone.now())
+    v2 = Visit.all_objects.create(tenant=t1, patient=p, scheduled_at=timezone.now())
+
+    r = client.post(f"/api/visits/{v1.id}/cancel/")
+    assert r.status_code == 200
+    assert r.json()["status"] == VisitStatus.CANCELLED
+    assert r.json()["cancelled_at"] is not None
+
+    r = client.post(f"/api/visits/{v2.id}/complete/", {"notes": "control ok"}, format="json")
+    assert r.status_code == 200
+    assert r.json()["status"] == VisitStatus.COMPLETED
+    assert r.json()["notes"] == "control ok"

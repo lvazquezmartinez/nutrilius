@@ -27,13 +27,30 @@ class PatientSerializer(serializers.ModelSerializer):
 class AnamnesisSerializer(serializers.ModelSerializer):
     class Meta:
         model = Anamnesis
-        fields = [
-            "id", "patient", "age", "sex", "weight_kg", "height_cm",
-            "usual_weight_kg", "weight_loss_pct", "smoker", "activity_level",
-            "meals_per_day", "pathologies", "restrictions", "allergies", "habits",
-            "goal", "data_json", "created_at",
-        ]
-        read_only_fields = ["id", "created_at"]
+        exclude = ["tenant", "created_by"]
+        read_only_fields = ["id", "created_at", "updated_at"]
+
+
+def _bmi(weight, height_cm):
+    """IMC = peso(kg) / talla(m)^2, si hay datos."""
+    if weight and height_cm and Decimal(height_cm) > 0:
+        h = Decimal(height_cm) / Decimal(100)
+        return (Decimal(weight) / (h * h)).quantize(Decimal("0.01"))
+    return None
+
+
+class EvolutionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Evolution
+        exclude = ["tenant", "created_by"]
+        read_only_fields = ["id", "created_at", "updated_at"]
+
+    def validate(self, attrs):
+        if attrs.get("bmi") is None:
+            computed = _bmi(attrs.get("weight_kg"), attrs.get("height_cm"))
+            if computed is not None:
+                attrs["bmi"] = computed
+        return attrs
 
 
 class PatientMetricSerializer(serializers.ModelSerializer):
@@ -46,20 +63,12 @@ class PatientMetricSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "created_at"]
 
     def validate(self, attrs):
-        # Calcula IMC si hay peso y talla y no vino dado.
         if attrs.get("bmi") is None:
             weight = attrs.get("weight_kg")
             height = attrs.get("height_m")
             if weight and height and Decimal(height) > 0:
                 attrs["bmi"] = (Decimal(weight) / (Decimal(height) ** 2)).quantize(Decimal("0.01"))
         return attrs
-
-
-class EvolutionSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Evolution
-        fields = ["id", "patient", "notes", "created_at"]
-        read_only_fields = ["id", "created_at"]
 
 
 class AnamnesisTemplateSerializer(serializers.ModelSerializer):
