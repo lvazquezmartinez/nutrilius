@@ -64,6 +64,7 @@ jobs:
     needs: test
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    environment: main # las Variables (GCP_*, WIF_PROVIDER, ...) viven en este environment
 
     permissions:
       contents: read
