@@ -60,11 +60,16 @@ más paciente y visitante público como actores externos.
 | RF-16 | Vista de agenda/calendario del tenant. | H |
 | RF-17 | Marca de recordatorio enviado (`reminder_sent`) para envío de recordatorios. | H |
 
-### 2.5 Pagos y obras sociales
+### 2.5 Pagos y obras sociales — *fuera del alcance de la tesis*
+> El objetivo general del TFG se centra en **agenda, anamnesis y planes con IA
+> supervisada**. Pagos y obras sociales son funcionalidad **heredada del producto**
+> pero **no forman parte del entregable de la tesis**; se documentan como referencia
+> para una eventual continuación, sin implementarse en el prototipo.
+
 | ID | Requerimiento | Origen |
 |---|---|---|
-| RF-18 | Registrar pagos por paciente: método, monto, fecha de pago, vencimiento, estado (`PAID`/`PENDING`), turno e insurance asociados. | H |
-| RF-19 | Catálogo de obras sociales (insurances) por tenant: crear, listar, editar, activar/desactivar. | H |
+| RF-18 | *(Fuera de alcance)* Registrar pagos por paciente: método, monto, fecha de pago, vencimiento, estado (`PAID`/`PENDING`), turno e insurance asociados. | H · fuera de alcance |
+| RF-19 | *(Fuera de alcance)* Catálogo de obras sociales (insurances) por tenant: crear, listar, editar, activar/desactivar. | H · fuera de alcance |
 
 ### 2.6 Planes nutricionales
 | ID | Requerimiento | Origen |

@@ -50,10 +50,10 @@ Los IDs `RF-*` / `RNF-*` refieren a `REQUERIMIENTOS.md`.
 - Verificado: migraciones aplicadas + 32 tests en verde (Fase 1 + 2).
 
 ## Fase 3 — Operación comercial y administración
-- [ ] Obras sociales (insurances) por tenant (RF-19)
-- [ ] Pagos: método, monto, estado, vencimiento, insurance/visita (RF-18)
+- [~] Obras sociales (insurances) — **fuera del alcance de la tesis** (RF-19)
+- [~] Pagos — **fuera del alcance de la tesis** (RF-18)
 - [ ] Configuración del tenant: datos, logo a storage externo, `slug`, plan/feature flags (RF-28, RF-29, RF-30, RNF-15)
-- [ ] Dashboard: métricas agregadas (pacientes activos, próximos turnos, cobros)
+- [x] Dashboard: métricas agregadas reales (pacientes activos, nuevos, turnos de hoy) — endpoint `/api/dashboard`, con estados vacíos
 - [ ] Super Admin: listar tenants, analytics, activar/desactivar, cambiar plan, reset admin (RF-31, RF-32, RF-33)
 - [ ] Tests de la fase
 
