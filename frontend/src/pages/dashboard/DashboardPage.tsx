@@ -157,9 +157,6 @@ export function DashboardPage() {
         </div>
       </div>
 
-      <p className="text-xs text-text-disabled mt-6">
-        Los indicadores de cobros llegan con el módulo de pagos.
-      </p>
     </div>
   )
 }

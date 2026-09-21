@@ -17,7 +17,7 @@ const NAV_PRIMARY: NavItem[] = [
   { href: '/pacientes',    icon: Icons.Users,      label: 'Pacientes' },
   { href: '/agenda',       icon: Icons.Calendar,   label: 'Agenda' },
   { href: '/planes',       icon: Icons.Table,      label: 'Planes' },
-  { href: '/pagos',        icon: Icons.CreditCard, label: 'Pagos' },
+  // 'Pagos' fuera del alcance de la tesis (módulo Billing no incluido).
 ]
 
 const NAV_SECONDARY: NavItem[] = [
