@@ -5,6 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { AuthLayout } from '@/components/layout/AuthLayout'
 import { Button, Input } from '@/components/ui'
+import { GoogleAuthButton } from '@/components/auth/GoogleAuthButton'
 import { authService } from '@/services/auth'
 
 const schema = z.object({
@@ -31,16 +32,18 @@ export function RegisterPage() {
   async function onSubmit(data: FormData) {
     setServerError('')
     try {
+      const parts = data.name.trim().split(/\s+/)
       await authService.register({
-        name:         data.name,
-        businessName: data.businessName,
-        email:        data.email,
-        password:     data.password,
+        business_name: data.businessName,
+        email:         data.email,
+        password:      data.password,
+        first_name:    parts[0] ?? '',
+        last_name:     parts.slice(1).join(' '),
       })
       setDone(true)
     } catch (err: any) {
-      const status = err?.response?.status
-      if (status === 409) {
+      const emailErr = err?.response?.data?.email
+      if (emailErr) {
         setServerError('Ya existe una cuenta con ese email.')
       } else {
         setServerError('No se pudo crear la cuenta. Intentá de nuevo.')
@@ -143,6 +146,15 @@ export function RegisterPage() {
           Al registrarte aceptás los términos de uso del servicio.
         </p>
       </form>
+
+      {/* Separador */}
+      <div className="flex items-center gap-3 my-6">
+        <div className="h-px flex-1 bg-border-subtle" />
+        <span className="text-xs text-text-muted">o</span>
+        <div className="h-px flex-1 bg-border-subtle" />
+      </div>
+
+      <GoogleAuthButton />
     </AuthLayout>
   )
 }

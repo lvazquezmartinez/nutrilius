@@ -148,7 +148,7 @@ export function DashboardPage() {
           {capitalDate}
         </p>
         <h1 className="text-2xl font-semibold text-text-primary">
-          {getGreeting()}, {user?.name?.split(' ')[0] ?? 'bienvenido'}
+          {getGreeting()}, {user?.first_name || 'bienvenido'}
         </h1>
       </div>
 

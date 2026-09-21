@@ -5,6 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { AuthLayout } from '@/components/layout/AuthLayout'
 import { Button, Input } from '@/components/ui'
+import { GoogleAuthButton } from '@/components/auth/GoogleAuthButton'
 import { authService } from '@/services/auth'
 import { useAuthStore } from '@/store/authStore'
 
@@ -33,16 +34,16 @@ export function LoginPage() {
     setServerError('')
     try {
       const res = await authService.login(data)
-      setAuth(res.user, res.accessToken)
+      setAuth(res.user, res.access, res.refresh)
       navigate('/dashboard')
     } catch (err: any) {
       const status = err?.response?.status
-      if (status === 403) {
-        setServerError('Confirmá tu email antes de iniciar sesión.')
-      } else if (status === 401) {
+      const detail = err?.response?.data?.detail
+      if (status === 401) {
         setServerError('Email o contraseña incorrectos.')
-      } else if (status === 423) {
-        setServerError('Tu cuenta está desactivada. Contactá al administrador.')
+      } else if (status === 400 && detail) {
+        // Email sin confirmar o cuenta desactivada (mensaje del backend).
+        setServerError(detail)
       } else {
         setServerError('No se pudo iniciar sesión. Intentá de nuevo.')
       }
@@ -109,6 +110,15 @@ export function LoginPage() {
           Ingresar
         </Button>
       </form>
+
+      {/* Separador */}
+      <div className="flex items-center gap-3 my-6">
+        <div className="h-px flex-1 bg-border-subtle" />
+        <span className="text-xs text-text-muted">o</span>
+        <div className="h-px flex-1 bg-border-subtle" />
+      </div>
+
+      <GoogleAuthButton />
     </AuthLayout>
   )
 }

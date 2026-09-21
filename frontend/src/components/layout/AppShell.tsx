@@ -63,9 +63,10 @@ function Sidebar() {
   const logout = useAuthStore(s => s.logout)
   const navigate = useNavigate()
 
-  const initials = user?.name
-    ? user.name.split(' ').slice(0, 2).map(n => n[0]).join('').toUpperCase()
-    : '?'
+  const fullName = user ? `${user.first_name} ${user.last_name}`.trim() : ''
+  const initials = fullName
+    ? fullName.split(' ').slice(0, 2).map(n => n[0]).join('').toUpperCase()
+    : (user?.email?.[0]?.toUpperCase() ?? '?')
 
   function handleLogout() {
     logout()
@@ -114,7 +115,7 @@ function Sidebar() {
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-text-primary truncate leading-tight">
-              {user?.name ?? '—'}
+              {fullName || user?.email || '—'}
             </p>
             <p className="text-xs text-text-muted truncate leading-tight">{user?.email}</p>
           </div>
