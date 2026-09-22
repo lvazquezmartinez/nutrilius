@@ -22,10 +22,18 @@ Formato: estilo ADR (Architecture Decision Record) resumido.
 - **Alternativas:** microservicios; monolito sin separación clara.
 - **Por qué:** para un prototipo de tesis operado por una VM única, microservicios son sobreingeniería. La separación por apps mantiene los límites del dominio (ver `MODULOS.md`) y permite extraer servicios más adelante si hace falta (p. ej. AI Orchestration).
 
-### DT-03 Estrategia multi-tenant
-- **Decisión:** **base y esquema compartidos con `tenant_id` obligatorio** en toda entidad de negocio, resuelto por una capa de tenancy central (middleware + managers que filtran por tenant).
-- **Alternativas:** `schema por tenant` (`django-tenants`), `base por tenant`.
-- **Por qué:** simplicidad operativa y de backups para la etapa inicial; el diseño deja lugar para evolucionar a schema-per-tenant en clientes premium. Requiere tests automáticos anti-fuga (ver DS-01).
+### DT-03 Estrategia multi-tenant (shared-schema)
+- **Decisión:** **shared database, shared schema** — una **única base PostgreSQL** con **tablas compartidas** por todos los consultorios; cada entidad de negocio lleva una columna **`tenant_id` obligatoria**. El aislamiento entre tenants es **lógico, a nivel de aplicación** (no hay separación física por base ni por esquema).
+- **Cómo se implementa (capa de tenancy central):**
+  1. `TenantMiddleware` toma el `tenant_id` del usuario autenticado (JWT) y lo guarda en un **`ContextVar` por request**.
+  2. `TenantManager.get_queryset()` **filtra automáticamente** todo queryset por ese `tenant_id` — es el `objects` por defecto de `TenantOwnedModel`.
+  3. `TenantScopedModelViewSet` refuerza el scope en cada endpoint (filtra por `request.user.tenant_id` y fija el contexto en `initial()`).
+  4. El acceso sin scope (`all_objects` / `all_tenants`) queda reservado para uso administrativo **explícito**.
+- **Alternativas:** `schema por tenant` (`django-tenants`), `base por tenant`, **Row-Level Security (RLS) de Postgres**.
+- **Por qué:** simplicidad operativa y de costo para un prototipo de consultorios chicos/medianos — **una sola base, un juego de migraciones, un único backup**. Es un patrón estándar de SaaS. El diseño deja lugar para evolucionar sin reescribir el dominio.
+- **Qué NO provee — riesgo residual:** no existe una barrera **en la base**. Quien se conecte por **SQL crudo** (connector/credenciales de la DB) ve **todos los tenants**. El aislamiento **depende de que el código esté correcto**: un query mal scopeado (`all_objects`, `.raw()`, SQL directo) podría filtrar datos entre consultorios. Se mitiga con los **tests automáticos anti-fuga** de DS-01, que verifican a nivel endpoint y a nivel del `TenantManager` que ningún tenant vea datos de otro.
+- **Evolución / hardening (planteado, no en el prototipo):** **RLS de Postgres** — *policies* que fuerzan `tenant_id` en la propia base (seteando una variable de sesión por request), como **defensa en profundidad** para datos de salud aunque el filtro de la app falle; y `schema-per-tenant` para clientes premium.
+- **Requerimiento:** RNF-01. Ver **DS-01**.
 
 ### DT-04 Autenticación de API
 - **Decisión:** **JWT + refresh** con `djangorestframework-simplejwt`.
@@ -73,6 +81,8 @@ Formato: estilo ADR (Architecture Decision Record) resumido.
 ### DS-01 Aislamiento entre tenants
 - **Decisión:** `tenant_id` obligatorio en toda entidad de negocio; filtrado centralizado por el tenant del usuario autenticado (manager/queryset base + middleware de contexto). **Tests automáticos anti-fuga** que verifiquen que ningún endpoint devuelve datos de otro tenant.
 - **Riesgo que mitiga:** fuga de datos entre consultorios — el riesgo más grave de un SaaS multi-tenant.
+- **Riesgo residual:** al ser **shared-schema** (ver DT-03), el aislamiento es **de aplicación**, no de base: un query sin scope o el acceso por SQL crudo cruzan tenants. Por eso los tests anti-fuga son parte obligatoria de cada fase.
+- **Hardening futuro:** **RLS de Postgres** como defensa en profundidad a nivel base.
 - **Requerimiento:** RNF-01.
 
 ### DS-02 Protección de datos sensibles de salud
@@ -95,9 +105,14 @@ Formato: estilo ADR (Architecture Decision Record) resumido.
 - **Riesgo que mitiga:** secuestro de sesión, reutilización de tokens, enlaces públicos permanentes.
 - **Requerimiento:** RNF-05.
 
-### DS-06 Autorización por rol
-- **Decisión:** RBAC con `SUPER_ADMIN` / `ADMIN` / `USER` mediante permisos de DRF; `SUPER_ADMIN` es el único que opera fuera de un tenant.
-- **Riesgo que mitiga:** escalada de privilegios y operaciones fuera del alcance del rol.
+### DS-06 Autorización (autenticación + tenant; rol acotado)
+- **Estado real:** el control de acceso efectivo hoy es **autenticación obligatoria (JWT) + aislamiento por tenant**. Existe el enum de roles `SUPER_ADMIN` / `ADMIN` / `USER`, pero su **enforcement es acotado**:
+  - `IsTenantAdmin` (rol `ADMIN`) protege **solo la gestión de usuarios internos** (`/users`, activar/desactivar).
+  - `IsSuperAdmin` está **definido pero sin uso** (el módulo Super Admin no está construido).
+  - **Todo lo clínico** (pacientes, anamnesis, evoluciones, turnos, dashboard) usa **solo `IsAuthenticated` + scope por tenant**: cualquier usuario del consultorio hace lo mismo sobre los datos de su tenant. **No hay una matriz de permisos por rol sobre los datos clínicos.**
+- **Decisión de diseño:** para un consultorio chico —donde el profesional titular y su staff comparten la operación clínica— **no** se implementa RBAC granular sobre datos clínicos en el prototipo; el límite de seguridad es **tenant + autenticación** (+ rol `ADMIN` solo para administrar usuarios).
+- **Riesgo que mitiga / residual:** evita operaciones administrativas de usuarios por parte de no-admins. **No** distingue permisos clínicos entre roles (riesgo asumido para el alcance actual).
+- **Hardening futuro:** matriz de permisos por rol (p. ej. `USER` sin borrar/exportar) y activación de `IsSuperAdmin` al construir el módulo Super Admin.
 - **Requerimiento:** RF-06.
 
 ### DS-07 Gestión de secretos
