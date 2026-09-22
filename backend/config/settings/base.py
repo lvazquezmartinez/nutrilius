@@ -51,9 +51,9 @@ LOCAL_APPS = [
     "apps.clinical",
     "apps.scheduling",
     "apps.dashboard",
-    # "apps.billing",        # Fase 3
-    # "apps.plans",          # Fase 4
-    # "apps.ai",             # Fase 4
+    "apps.plans",            # Fase 4 — planes + IA supervisada (modelo diseñado)
+    # "apps.billing",        # Fuera del alcance de la tesis
+    # "apps.ai",             # Fase 4 (lógica de IA; el modelo de traza vive en apps.plans)
     # "apps.messaging",      # Fase 4/1
     # "apps.public_portal",  # Fase 5
     # "apps.superadmin",     # Fase 3
