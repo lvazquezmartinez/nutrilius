@@ -7,8 +7,9 @@
 > su requerimiento asociado (`RF-*`/`RNF-*` de `REQUERIMIENTOS.md`) y el sprint.
 >
 > Fuentes: `REQUERIMIENTOS.md`, `V1_PLAN.md`, `MODULOS.md` y el código en `backend/` y
-> `frontend/`. Estado verificado al 2026-09-21 (40 tests backend en verde, app en
-> producción en `nutrilius.com.ar`).
+> `frontend/`. **No es un backlog hipotético ni una versión simplificada: refleja el
+> estado real del sistema.** Estado verificado al 2026-09-23 — **versión `v0.1.0`
+> desplegada en producción** (`nutrilius.com.ar`), 40 tests backend en verde.
 
 ---
 
@@ -150,46 +151,106 @@ Ordenado por prioridad de negocio. `Est.` = estimación relativa en *story point
 
 ## 4. Historias de usuario detalladas (con criterios de aceptación)
 
-> Se detallan las **implementadas** clave y la **historia núcleo pendiente** (IA), que es
-> la que conviene mostrar completa en la defensa. Formato: *Como… quiero… para…*.
+> **Estas historias no son hipotéticas: son las del sistema real.** Las marcadas ✅ están
+> **implementadas y desplegadas** (v0.1.0 en producción, verificadas por tests); la ⏳ es la
+> historia núcleo pendiente (IA), que se construye en el Sprint 4. Formato: *Como… quiero… para…*.
 
-### HU-01 · Registro del consultorio (PB-01, RF-01) — ✅ Hecho
-**Como** nutricionista dueño de un consultorio **quiero** registrar mi consultorio y mi
-usuario administrador **para** empezar a gestionar mis pacientes.
-**Criterios de aceptación:**
-- Al registrarme se crea el *tenant* y un usuario con rol `ADMIN` asociado.
+### Épica 1 — Identidad y acceso
+
+**HU-01 · Registro del consultorio (PB-01, RF-01) — ✅**
+*Como* nutricionista dueño de un consultorio *quiero* registrar mi consultorio y mi usuario administrador *para* empezar a gestionar mis pacientes.
+- Al registrarme se crea el *tenant* + un usuario `ADMIN` asociado.
 - Recibo un email de confirmación; no puedo operar hasta confirmar.
-- Dos consultorios distintos nunca ven datos del otro.
+- Dos consultorios nunca ven datos del otro.
 
-### HU-11 · Anamnesis del paciente (PB-11, RF-10) — ✅ Hecho
-**Como** profesional **quiero** cargar la anamnesis del paciente (datos generales,
-hábitos, recordatorio de 24 h, antropometría) **para** tener su historia clínica y
-alimentar luego la generación del plan.
-**Criterios de aceptación:**
-- Hay **una** anamnesis por paciente, editable (upsert).
-- Los datos quedan asociados al tenant y auditados.
-- Los campos relevantes (edad, sexo, patologías, objetivos) quedan disponibles para el motor de IA.
+**HU-02 · Inicio de sesión (PB-02, RF-02) — ✅**
+*Como* usuario *quiero* iniciar sesión con email y contraseña *para* acceder de forma segura.
+- Devuelve JWT de acceso + refresh; exige email confirmado.
+- Credenciales inválidas → error genérico (sin revelar si el email existe).
 
-### HU-14 · Evoluciones y tendencia (PB-14/PB-15, RF-14) — ✅ Hecho
-**Como** profesional **quiero** registrar cada control con antropometría/composición y
-**ver la evolución en un gráfico** **para** evaluar el progreso del paciente.
-**Criterios de aceptación:**
+**HU-03 · Confirmación de email (PB-03, RF-03) — ✅**
+*Como* usuario *quiero* confirmar mi email con un enlace *para* activar mi cuenta.
+- Token de un solo uso y con expiración; sin confirmar no hay login.
+
+**HU-04 · Recuperación de contraseña (PB-04, RF-04) — ✅**
+*Como* usuario *quiero* restablecer mi contraseña si la olvido *para* recuperar el acceso.
+- Solicitud con anti-enumeración (misma respuesta exista o no el email); token temporal de un solo uso.
+
+**HU-05 · Gestión de usuarios internos (PB-05, RF-05) — ✅**
+*Como* administrador del consultorio *quiero* crear, listar y activar/desactivar usuarios *para* dar acceso a mi equipo.
+- Solo el rol `ADMIN` accede a estas acciones (permiso forzado en backend); cada acción queda auditada.
+
+**HU-07 · Ingreso con Google (PB-07) — ✅**
+*Como* usuario *quiero* entrar con mi cuenta de Google *para* no recordar otra contraseña.
+- Se verifica el ID token contra el Client ID; si el usuario es nuevo, completa los datos faltantes.
+
+### Épica 2 — Gestión de pacientes
+
+**HU-08 · Ficha de paciente (PB-08, RF-07) — ✅**
+*Como* profesional *quiero* dar de alta y editar pacientes con su ficha completa *para* tener sus datos ordenados.
+- Nombre, DNI, fecha de nacimiento, sexo, contacto, dirección y notas; el alta queda auditada.
+
+**HU-09 · Listado y baja lógica (PB-09, RF-08) — ✅**
+*Como* profesional *quiero* buscar/listar pacientes y darlos de baja/reactivar *para* gestionar mi cartera.
+- Búsqueda + paginado; la baja es lógica (no borra datos); todo filtrado por mi consultorio.
+
+### Épica 3 — Registro clínico
+
+**HU-11 · Anamnesis del paciente (PB-11, RF-10) — ✅**
+*Como* profesional *quiero* cargar la anamnesis (generales, hábitos, recordatorio de 24 h, antropometría) *para* tener su historia clínica y alimentar luego el plan.
+- Una anamnesis por paciente, editable (upsert); 33 campos + `data_json` (ver `ANEXO_ANAMNESIS.md`).
+- Los campos relevantes quedan disponibles para el motor de IA.
+
+**HU-12 · Plantilla de anamnesis (PB-12, RF-11/12) — ✅**
+*Como* profesional *quiero* adaptar y restablecer la plantilla de anamnesis *para* ajustarla a mi forma de trabajo.
+- Plantilla JSON por tenant; acción de reset a la de por defecto.
+
+**HU-13 · Métricas antropométricas (PB-13, RF-13) — ✅**
+*Como* profesional *quiero* registrar métricas en el tiempo *para* seguir la composición del paciente.
+- Peso, talla, IMC (calculado si falta), cintura y fecha de medición.
+
+**HU-14 · Evoluciones y tendencia (PB-14/PB-15, RF-14) — ✅**
+*Como* profesional *quiero* registrar cada control y ver la evolución en un gráfico *para* evaluar el progreso.
 - Cada evolución guarda peso, talla, IMC (calculado), cintura/cadera/brazo, % grasa, % músculo, TA y notas.
-- El gráfico muestra la tendencia de una métrica seleccionable (peso, % músculo, IMC, grasa, cintura) cuando hay ≥2 registros.
+- Gráfico de tendencia con métrica seleccionable (peso, % músculo, IMC, grasa, cintura) cuando hay ≥2 registros.
 
-### HU-25 · Generación de plan con IA supervisada (PB-20…PB-25, RF-IA-*) — ⏳ Pendiente ⭐
-**Como** profesional **quiero** que el sistema **proponga** un plan alimentario con IA,
-acotado por un motor de reglas y **sujeto a mi aprobación**, **para** ahorrar tiempo sin
-resignar el control clínico ni la seguridad del paciente.
+### Épica 4 — Agenda y turnos
+
+**HU-16 · Turnos con estado (PB-16, RF-15) — ✅**
+*Como* profesional *quiero* agendar turnos con estado y motivo, y poder cancelarlos/completarlos *para* organizar mi agenda.
+- Fecha-hora, duración, estado (`SCHEDULED`/`COMPLETED`/`CANCELLED`/`NO_SHOW`), motivo, fecha de cancelación.
+- Acciones de cancelar y completar; UI en la ficha del paciente.
+
+**HU-18 · Agenda/calendario global (PB-18, RF-16) — ⏳**
+*Como* profesional *quiero* una vista de calendario del consultorio *para* ver todos los turnos de un vistazo. *(pendiente, Sprint 4)*
+
+### Épica 5 — Panel
+
+**HU-19 · Dashboard (PB-19) — ✅**
+*Como* profesional *quiero* un panel de inicio con métricas *para* ver el estado de mi consultorio.
+- Pacientes activos, pacientes nuevos y turnos de hoy, calculados en tiempo real y con estados vacíos.
+
+### Épica 6 — Planes + IA supervisada ⭐ (núcleo, Sprint 4)
+
+**HU-25 · Generación de plan con IA supervisada (PB-20…PB-28, RF-IA-*) — ⏳**
+*Como* profesional *quiero* que el sistema **proponga** un plan alimentario con IA, acotado por un motor de reglas y **sujeto a mi aprobación**, *para* ahorrar tiempo sin resignar el control clínico ni la seguridad del paciente.
 **Criterios de aceptación (restricciones de diseño de la tesis):**
 1. Antes de la IA, un **motor de reglas** calcula requerimiento energético y macros y deriva **restricciones duras** (patologías/alergias).
 2. A la IA se envía información **seudonimizada** (nunca nombre/DNI/contacto).
 3. La IA solo propone **dentro** de esos parámetros (localizado a Argentina).
 4. Un **validador post-IA** recalcula calorías/macros; si no cumplen, se marca para revisión.
-5. El plan nace en estado `BORRADOR_IA` y **el paciente no lo ve** hasta `APROBADO`/`COMPARTIDO`; la transición exige **aprobación profesional** (gate en backend, firma quién/cuándo/versión).
+5. El plan nace en `BORRADOR_IA` y **el paciente no lo ve** hasta `APROBADO`/`COMPARTIDO`; la transición exige **aprobación profesional** (gate en backend, firma quién/cuándo/versión).
 6. Se registra la **trazabilidad** (prompt, proveedor, modelo, versión, costo) y el **consentimiento** del paciente.
 
-*(El resto de las historias se derivan directamente de la tabla del §2 con el mismo formato.)*
+### Transversales (seguridad/infra)
+
+**HU-T1 · Aislamiento multi-tenant (PB-T1, RNF-01) — ✅**
+*Como* dueño del sistema *quiero* que cada consultorio vea solo sus datos *para* garantizar la confidencialidad.
+- `tenant_id` en toda entidad + filtrado central; tests anti-fuga que verifican que ningún endpoint devuelve datos de otro tenant.
+
+**HU-T2 · Auditoría de eventos y acceso (PB-T2, RNF-04/03) — ✅**
+*Como* responsable de datos *quiero* un registro inmutable de eventos sensibles *para* poder rastrear quién hizo qué.
+- Login, reset, altas/bajas, alta de paciente y **acceso a datos clínicos** quedan registrados con actor, IP y timestamp.
 
 ---
 
