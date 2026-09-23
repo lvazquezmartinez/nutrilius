@@ -50,9 +50,11 @@ Leyenda de estado: ✅ Hecho · 🟡 Parcial · 🚧 En curso · ⏳ Pendiente �
 
 ## 2. Product Backlog
 
-Ordenado por prioridad de negocio. `Est.` = estimación relativa en *story points* (Fibonacci).
+Ordenado por prioridad de negocio. **Puntos** = estimación relativa en *story points*
+(Fibonacci). Las **dependencias** se listan tras la tabla (la mayoría de los ítems son
+independientes; se detallan solo los que dependen de otro).
 
-| ID | Épica | Historia de usuario (resumen) | RF/RNF | Prioridad | Est. | Estado | Sprint |
+| ID | Épica | Historia de usuario (resumen) | RF/RNF | Prioridad | Puntos | Estado | Sprint |
 |---|---|---|---|---|---|---|---|
 | PB-01 | E1 | Registrar consultorio + usuario admin | RF-01 | Alta | 5 | ✅ | S1 |
 | PB-02 | E1 | Login con email/contraseña (JWT) | RF-02 | Alta | 3 | ✅ | S1 |
@@ -106,6 +108,28 @@ Ordenado por prioridad de negocio. `Est.` = estimación relativa en *story point
 
 **Resumen de avance:** 25 de 44 ítems del backlog **completados** (todo el núcleo de gestión: identidad, pacientes, registro clínico, turnos, dashboard, multi-tenant, infra/CI-CD). Lo pendiente de mayor valor es la **Épica 6 (Planes + IA supervisada)**, el diferencial del TFG.
 
+### Dependencias
+
+Base transversal: **todo** depende de PB-T1 (aislamiento multi-tenant) y de la identidad (PB-01).
+
+| Ítem | Depende de |
+|---|---|
+| PB-02, PB-03, PB-04, PB-05, PB-07 | PB-01 (registro/tenant + usuario) |
+| PB-11, PB-12, PB-13, PB-14, PB-15 | PB-08 (paciente) |
+| PB-16, PB-17 | PB-08 (paciente) |
+| PB-19 (dashboard) | PB-08, PB-16 |
+| PB-20, PB-21 (motor de reglas) | PB-11 (anamnesis), PB-13 (métricas) |
+| PB-22 (IA acotada) | PB-20, PB-21 |
+| PB-23 (validación) | PB-22 |
+| PB-25 (aprobación) | PB-22, PB-23 |
+| PB-26, PB-27 | PB-22 |
+| PB-30 (PDF) | PB-27 |
+| PB-31 (compartir) | PB-30 |
+| PB-35, PB-36 (portal) | PB-34 (slug), PB-16 (turnos) |
+| PB-37, PB-38 (super admin) | PB-01, PB-T1 |
+
+El resto de los ítems no tienen dependencias (además de la base transversal).
+
 ---
 
 ## 3. Sprint Backlog (por sprint, con incremento entregado)
@@ -122,6 +146,24 @@ Ordenado por prioridad de negocio. `Est.` = estimación relativa en *story point
 - PB-01…PB-06, PB-T1, PB-T2.
 - **Incremento:** flujo register → confirm → login → me; usuarios internos; aislamiento por tenant.
 - **Tests:** 18 (auth, usuarios, aislamiento endpoint, middleware/context-var).
+
+**Sprint backlog (a nivel tareas)** — formato de la consigna (Sprint 1, obligatorio):
+
+| Sprint | Historia de usuario | ID | Tarea | Prioridad | Estimado | Estado |
+|---|---|---|---|---|---|---|
+| 1 | PB-T1 · Aislamiento multi-tenant | 01 | Diseñar capa de tenancy (modelo + middleware + manager) | Alta | 2 días | Hecho |
+| 1 | PB-T1 · Aislamiento multi-tenant | 02 | Codificar `TenantOwnedModel` + `TenantManager` + `TenantMiddleware` | Alta | 2 días | Hecho |
+| 1 | PB-T1 · Aislamiento multi-tenant | 03 | Tests anti-fuga entre tenants | Alta | 1 día | Hecho |
+| 1 | PB-01 · Registrar consultorio | 04 | Codificar registro de tenant + usuario admin | Alta | 2 días | Hecho |
+| 1 | PB-01 · Registrar consultorio | 05 | Diseñar/implementar pantalla de registro | Alta | 1 día | Hecho |
+| 1 | PB-02 · Login (JWT) | 06 | Codificar login JWT + refresh | Alta | 1 día | Hecho |
+| 1 | PB-03 · Confirmar email | 07 | Token de confirmación + envío de email | Alta | 1 día | Hecho |
+| 1 | PB-04 · Recuperar contraseña | 08 | Solicitud + reset con anti-enumeración | Media | 1 día | Hecho |
+| 1 | PB-05 · Usuarios internos | 09 | CRUD de usuarios restringido a rol ADMIN | Media | 1 día | Hecho |
+| 1 | PB-02/05 · Acceso | 10 | Tests de auth, usuarios y roles | Alta | 1 día | Hecho |
+
+> Los sprints 2 y 3 (ya completados) y 4-6 (planificados) siguen la misma estructura de
+> tareas: **diseñar → codificar → diseñar interfaz → implementar → testing**.
 
 ### Sprint 2 — Gestión clínica ✅
 **Objetivo:** ficha del paciente y registro clínico completo.
@@ -153,20 +195,25 @@ Ordenado por prioridad de negocio. `Est.` = estimación relativa en *story point
 
 > **Estas historias no son hipotéticas: son las del sistema real.** Las marcadas ✅ están
 > **implementadas y desplegadas** (v0.1.0 en producción, verificadas por tests); la ⏳ es la
-> historia núcleo pendiente (IA), que se construye en el Sprint 4. Formato: *Como… quiero… para…*.
+> historia núcleo pendiente (IA), que se construye en el Sprint 4. Descripción: *Como… quiero… para…*;
+> **criterios de aceptación en formato «Dado – cuando – entonces»**.
 
 ### Épica 1 — Identidad y acceso
 
 **HU-01 · Registro del consultorio (PB-01, RF-01) — ✅**
 *Como* nutricionista dueño de un consultorio *quiero* registrar mi consultorio y mi usuario administrador *para* empezar a gestionar mis pacientes.
-- Al registrarme se crea el *tenant* + un usuario `ADMIN` asociado.
-- Recibo un email de confirmación; no puedo operar hasta confirmar.
-- Dos consultorios nunca ven datos del otro.
+Criterios de aceptación:
+- **Dado** un email no registrado, **cuando** completo el registro, **entonces** se crea el consultorio (tenant) + un usuario `ADMIN` y se envía un email de confirmación.
+- **Dado** un email ya registrado, **cuando** intento registrarme, **entonces** el sistema avisa y no crea un duplicado.
+- **Dado** un usuario que no confirmó su email, **cuando** intenta iniciar sesión, **entonces** el sistema lo rechaza hasta confirmar.
+- **Dado** dos consultorios distintos, **cuando** cada uno consulta sus datos, **entonces** ninguno ve los datos del otro.
 
 **HU-02 · Inicio de sesión (PB-02, RF-02) — ✅**
 *Como* usuario *quiero* iniciar sesión con email y contraseña *para* acceder de forma segura.
-- Devuelve JWT de acceso + refresh; exige email confirmado.
-- Credenciales inválidas → error genérico (sin revelar si el email existe).
+Criterios de aceptación:
+- **Dado** un usuario con email confirmado y credenciales válidas, **cuando** inicia sesión, **entonces** el sistema devuelve un JWT de acceso + refresh.
+- **Dado** un usuario con email sin confirmar, **cuando** intenta iniciar sesión, **entonces** el sistema lo rechaza.
+- **Dado** credenciales inválidas, **cuando** intenta iniciar sesión, **entonces** el sistema responde con un error genérico (sin revelar si el email existe).
 
 **HU-03 · Confirmación de email (PB-03, RF-03) — ✅**
 *Como* usuario *quiero* confirmar mi email con un enlace *para* activar mi cuenta.
@@ -198,8 +245,11 @@ Ordenado por prioridad de negocio. `Est.` = estimación relativa en *story point
 
 **HU-11 · Anamnesis del paciente (PB-11, RF-10) — ✅**
 *Como* profesional *quiero* cargar la anamnesis (generales, hábitos, recordatorio de 24 h, antropometría) *para* tener su historia clínica y alimentar luego el plan.
-- Una anamnesis por paciente, editable (upsert); 33 campos + `data_json` (ver `ANEXO_ANAMNESIS.md`).
-- Los campos relevantes quedan disponibles para el motor de IA.
+Criterios de aceptación:
+- **Dado** un paciente sin anamnesis, **cuando** guardo el formulario, **entonces** se crea su anamnesis (una por paciente).
+- **Dado** un paciente con anamnesis, **cuando** la edito y guardo, **entonces** el sistema la actualiza (upsert) sin duplicar.
+- **Dado** un paciente de otro consultorio, **cuando** intento asociarle una anamnesis, **entonces** el sistema lo rechaza.
+- **Dado** una anamnesis cargada, **cuando** se genere un plan con IA, **entonces** sus campos relevantes quedan disponibles para el motor de reglas.
 
 **HU-12 · Plantilla de anamnesis (PB-12, RF-11/12) — ✅**
 *Como* profesional *quiero* adaptar y restablecer la plantilla de anamnesis *para* ajustarla a mi forma de trabajo.
@@ -211,8 +261,10 @@ Ordenado por prioridad de negocio. `Est.` = estimación relativa en *story point
 
 **HU-14 · Evoluciones y tendencia (PB-14/PB-15, RF-14) — ✅**
 *Como* profesional *quiero* registrar cada control y ver la evolución en un gráfico *para* evaluar el progreso.
-- Cada evolución guarda peso, talla, IMC (calculado), cintura/cadera/brazo, % grasa, % músculo, TA y notas.
-- Gráfico de tendencia con métrica seleccionable (peso, % músculo, IMC, grasa, cintura) cuando hay ≥2 registros.
+Criterios de aceptación:
+- **Dado** un control con peso y talla, **cuando** lo guardo, **entonces** el sistema registra la evolución y calcula el IMC.
+- **Dado** un paciente con ≥2 evoluciones, **cuando** abro la pestaña Evoluciones, **entonces** se muestra el gráfico de tendencia con selector de métrica (peso, % músculo, IMC, grasa, cintura).
+- **Dado** un paciente con menos de 2 registros, **cuando** abro la pestaña, **entonces** no se muestra el gráfico (no hay tendencia que graficar).
 
 ### Épica 4 — Agenda y turnos
 
