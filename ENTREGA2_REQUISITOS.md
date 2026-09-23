@@ -11,10 +11,10 @@
 |---|---|---|---|
 | 1 | **Diagnóstico y propuesta** | 🟡 redacción (agente) | `REQUERIMIENTOS.md`, `CASOS_DE_USO_Y_FLUJOS.md` |
 | 2 | **Objetivo, límite y alcances** del prototipo | 🟡 redacción | Alcances + nota datos reales |
-| 3 | **Descripción del sistema (Scrum)**: product backlog + historias + sprint backlog | 🟡 insumo listo, faltan ajustes de formato | `ENTREGA2_SCRUM.md` |
-| 4 | **Estructura de datos**: DER (+ justificación) + **diccionario de datos** | 🟡 DER listo; diccionario pendiente | `MODELO_DATOS.md`, `ANEXO_ANAMNESIS.md` |
-| 5 | **Prototipos de interfaces de pantallas** | ✅ **capturas generadas** | `capturas-entrega2/` (9 PNG) |
-| 6 | **Diagrama de arquitectura** (Scrum) + relato | 🟡 casi listo | `INFRAESTRUCTURA.md` |
+| 3 | **Descripción del sistema (Scrum)**: product backlog + historias + sprint backlog | ✅ insumo completo | `ENTREGA2_SCRUM.md` |
+| 4 | **Estructura de datos**: DER (+ justificación) + **diccionario de datos** | ✅ completo | `MODELO_DATOS.md`, `DICCIONARIO_DATOS.md`, `ANEXO_ANAMNESIS.md` |
+| 5 | **Prototipos de interfaces de pantallas** | ✅ capturas generadas | `capturas-entrega2/` (9 PNG) |
+| 6 | **Diagrama de arquitectura** (Scrum) + relato | ✅ completo | `ARQUITECTURA.md` + `docs/arquitectura.svg` |
 
 ## Requisitos de formato exactos (de la consigna)
 
@@ -53,12 +53,15 @@
 - Como el proyecto usa **Scrum**, va **diagrama de arquitectura** (los de UML presentan diagrama de despliegue).
 - Debe ir acompañado de un **breve relato** explicando su funcionamiento (cómo se conectan front, API, base y servicios en la nube). Base en `INFRAESTRUCTURA.md`.
 
-## Gaps concretos a cerrar (respecto a los insumos actuales)
-1. `ENTREGA2_SCRUM.md`: agregar columna **Dependencias** al backlog y renombrar "Est." → **Puntos de historia**.
-2. Reexpresar los **criterios de aceptación** de las historias en formato **"dado – cuando – entonces"**.
-3. Agregar una **tabla de Sprint backlog a nivel tareas** (al menos el Sprint 1, mandatorio).
-4. Generar el **diccionario de datos** de las entidades (por los nombres en inglés).
-5. Redactar el **relato de arquitectura** para acompañar el diagrama.
+## Gaps concretos — estado
+1. ✅ Backlog con **Puntos** + sección **Dependencias** (`ENTREGA2_SCRUM.md`).
+2. ✅ Criterios de aceptación en **"dado – cuando – entonces"** (historias ejemplares HU-01/02/11/14; el resto sigue el mismo formato).
+3. ✅ **Sprint backlog a nivel tareas** (Sprint 1, mandatorio).
+4. ✅ **Diccionario de datos** completo (`DICCIONARIO_DATOS.md`).
+5. ✅ **Relato de arquitectura** (`ARQUITECTURA.md`).
+
+**Todos los entregables tienen su insumo listo.** Queda solo la redacción/armado final en el
+`.docx` por el agente de tesis, y la decisión del PO sobre el apartado de datos reales.
 
 ## Pendiente de decisión del PO
 - Redacción del apartado de **datos reales** (demo con cuenta vacía; profesionales reales bajo su responsabilidad; Ley 25.326).
