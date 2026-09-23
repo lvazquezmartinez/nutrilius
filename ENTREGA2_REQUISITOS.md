@@ -1,42 +1,64 @@
 # Definición del prototipo tecnológico — Entrega 2
 
-> Requisitos y **checklist de estado** de la Entrega 2 (*Definición del prototipo
-> tecnológico*) del TFG, según lo relevado, con el **estado** de cada entregable y **qué
-> documento/insumo lo cubre**. Sirve para no perder de vista ningún ítem (en particular
-> las **capturas de pantalla**).
+> Requisitos **reales** de la Entrega 2 (transcritos de la consigna oficial
+> *"Prototipado tecnológico — Lectura 2: Definición del prototipo tecnológico"*, 38 pág.),
+> con el **estado** de cada entregable y el **insumo** que lo cubre. El proyecto usa
+> **Scrum**, así que aplican los artefactos de Scrum (no UML).
 
-## Entregables pedidos
+## Entregables (camino Scrum)
 
-| # | Entregable | Estado | Insumo / dónde |
+| # | Entregable | Estado | Insumo |
 |---|---|---|---|
-| 1 | **Diagnóstico y Propuesta** — descripción del área problemática y la propuesta de solución (3 procesos relevados: elaboración/aprobación de plan alimentario, registro de anamnesis, gestión de turnos, recontacto por inactividad) | 🟡 En redacción (agente tesis) | Base en `REQUERIMIENTOS.md` + `CASOS_DE_USO_Y_FLUJOS.md` |
-| 2 | **Objetivo, límites y alcances del prototipo** — qué hace, qué queda afuera y por qué | 🟡 En redacción | Alcances + nota de datos reales (ver `REQUERIMIENTOS.md` §2.5 y redacción acordada) |
-| 3 | **Descripción del Sistema con artefactos de Scrum** — product backlog, historias de usuario, sprint backlog | ✅ Insumo listo | `ENTREGA2_SCRUM.md` (18 historias reales + backlog + sprints) |
-| 4 | **Estructura de datos (DER)** — modelo de datos del prototipo | ✅ Insumo listo | `MODELO_DATOS.md` (DER Mermaid) |
-| 5 | **Prototipos de interfaces / pantallas** — mockups o wireframes **y/o capturas de pantalla** de las pantallas principales | ⏳ **Pendiente: subir capturas de pantalla** | Ver sección abajo |
-| 6 | **Diagrama de arquitectura** (versión Scrum, no UML formal) | 🟡 Casi listo | `INFRAESTRUCTURA.md` + decisiones (`DECISIONES_TECNICAS_Y_SEGURIDAD.md`) |
+| 1 | **Diagnóstico y propuesta** | 🟡 redacción (agente) | `REQUERIMIENTOS.md`, `CASOS_DE_USO_Y_FLUJOS.md` |
+| 2 | **Objetivo, límite y alcances** del prototipo | 🟡 redacción | Alcances + nota datos reales |
+| 3 | **Descripción del sistema (Scrum)**: product backlog + historias + sprint backlog | 🟡 insumo listo, faltan ajustes de formato | `ENTREGA2_SCRUM.md` |
+| 4 | **Estructura de datos**: DER (+ justificación) + **diccionario de datos** | 🟡 DER listo; diccionario pendiente | `MODELO_DATOS.md`, `ANEXO_ANAMNESIS.md` |
+| 5 | **Prototipos de interfaces de pantallas** | ✅ **capturas generadas** | `capturas-entrega2/` (9 PNG) |
+| 6 | **Diagrama de arquitectura** (Scrum) + relato | 🟡 casi listo | `INFRAESTRUCTURA.md` |
 
-Anexos complementarios ya generados: `ANEXO_ANAMNESIS.md` (ficha de anamnesis).
+## Requisitos de formato exactos (de la consigna)
 
-## ⚠️ Ítem 5 — Capturas de pantalla (pendiente)
+### 1 · Diagnóstico y propuesta
+- Tabla por proceso: **Nombre del proceso / Problemas / Causas**. Respetar el nombre del proceso del relevamiento.
+- ⚠️ La causa **nunca** es "no existe un sistema informático". No incluir procesos que ya son correctos.
+- Cerrar con una **propuesta genérica** (un relato) que resuelva los procesos diagnosticados.
 
-La consigna pide **subir capturas de pantalla** de las pantallas principales. Ventaja:
-el prototipo **está funcionando en producción** (`nutrilius.com.ar`), así que se pueden
-usar **capturas reales del sistema andando**, que valen más que wireframes.
+### 2 · Objetivo, límite y alcances
+- **Objetivo:** una sola oración, verbo en infinitivo, sin "punto y seguido".
+- **Límite:** "desde XXXX hasta YYYY".
+- **Alcances:** lista de procesos de negocio (solo mencionarlos, no explicarlos).
 
-Pantallas principales a capturar:
-- [ ] Landing pública (`/`)
-- [ ] Login / Registro (con ingreso por Google)
-- [ ] Dashboard (métricas + agenda del día)
-- [ ] Listado de pacientes (búsqueda)
-- [ ] Ficha de paciente — pestaña **Datos**
-- [ ] Ficha de paciente — pestaña **Anamnesis**
-- [ ] Ficha de paciente — pestaña **Evoluciones** (con el **gráfico de tendencia**)
-- [ ] Ficha de paciente — pestaña **Turnos**
+### 3 · Descripción del sistema (Scrum)
+- **Product backlog** (Tabla 5): columnas **ID · Historia de usuario · Prioridad · Puntos de historia · Dependencias**.
+- **Historias de usuario** (Tabla 2), cada una con:
+  - Identificación (código + nombre),
+  - Descripción: *"como <rol> quiero <función> para lograr <valor de negocio>"*,
+  - **Criterios de aceptación en formato "dado/a – cuando – entonces"**.
+- **Sprint backlog** (Tabla 3): columnas **Sprint · Historia de usuario · ID · Tareas · Prioridad · Estimado · Estado (Hecho/Por hacer)**. **Es mandatorio elaborar al menos el primer sprint** con sus tareas (diseñar, codificar, diseñar interfaz, implementar, testing).
 
-> Nota de privacidad: capturar con **datos de demo/sintéticos** (cuenta vacía o de
-> prueba), nunca con datos de pacientes reales.
+### 4 · Estructura de datos
+- Presentar **DER** (elegido por ser base relacional) y **justificar** la elección del diagrama.
+- **Diccionario de datos OBLIGATORIO en nuestro caso**: la consigna lo exige cuando los nombres de entidad/atributo **no están en español** o no son comprensibles. Nuestros modelos usan nombres en inglés (`first_name`, `weight_kg`, `muscle_mass_pct`, …) → **hay que incluirlo** (Tabla 4): **Campo · Longitud · Tipo de datos · Descripción**. (`ANEXO_ANAMNESIS.md` ya lo hace para la anamnesis; falta el resto de entidades.)
+
+### 5 · Prototipos de interfaces de pantallas — ✅
+- Pide "las interfaces de **todo el producto** que hayas diseñado" reflejando el **encadenamiento lógico** del proceso.
+- La consigna sugiere wireframes "sin codificar", pero como el prototipo **ya está construido**, entregamos **capturas reales del sistema** (equivalen y superan al mockup). En `capturas-entrega2/`:
+  - [x] 01 Landing · 02 Login · 03 Registro
+  - [x] 04 Dashboard · 05 Pacientes
+  - [x] 06 Ficha–Datos · 07 Ficha–Anamnesis · 08 Ficha–Evoluciones (con gráfico) · 09 Ficha–Turnos
+  - Capturadas con **cuenta demo + datos sintéticos** (sin datos reales).
+  - Falta (opcional): un **diagrama de flujo de navegación** entre pantallas para mostrar el "encadenamiento lógico".
+
+### 6 · Diagrama de arquitectura (Scrum)
+- Como el proyecto usa **Scrum**, va **diagrama de arquitectura** (los de UML presentan diagrama de despliegue).
+- Debe ir acompañado de un **breve relato** explicando su funcionamiento (cómo se conectan front, API, base y servicios en la nube). Base en `INFRAESTRUCTURA.md`.
+
+## Gaps concretos a cerrar (respecto a los insumos actuales)
+1. `ENTREGA2_SCRUM.md`: agregar columna **Dependencias** al backlog y renombrar "Est." → **Puntos de historia**.
+2. Reexpresar los **criterios de aceptación** de las historias en formato **"dado – cuando – entonces"**.
+3. Agregar una **tabla de Sprint backlog a nivel tareas** (al menos el Sprint 1, mandatorio).
+4. Generar el **diccionario de datos** de las entidades (por los nombres en inglés).
+5. Redactar el **relato de arquitectura** para acompañar el diagrama.
 
 ## Pendiente de decisión del PO
-- Redacción final del apartado de **datos reales** (demo con cuenta vacía; profesionales
-  reales bajo su responsabilidad; datos de salud Ley 25.326). Ver `ENTREGA2_SCRUM.md` §6.
+- Redacción del apartado de **datos reales** (demo con cuenta vacía; profesionales reales bajo su responsabilidad; Ley 25.326).
