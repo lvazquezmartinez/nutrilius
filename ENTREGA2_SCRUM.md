@@ -106,6 +106,10 @@ independientes; se detallan solo los que dependen de otro).
 | PB-T10 | ET | Observabilidad (logs estructurados, métricas por tenant) | RNF-13 | Baja | 3 | ⏳ | S6 |
 | PB-T11 | ET | Backups y restore de DB y archivos | RNF-17 | Media | 3 | ⏳ | S6 |
 
+> **Nota:** los ítems `PB-T*` (épica ET) son **requerimientos no funcionales / habilitadores
+> técnicos**, no historias de usuario; se incluyen en el backlog para trazabilidad, pero su
+> cumplimiento se verifica por DoD y tests (ver §4 · Requerimientos transversales).
+
 **Resumen de avance:** 25 de 44 ítems del backlog **completados** (todo el núcleo de gestión: identidad, pacientes, registro clínico, turnos, dashboard, multi-tenant, infra/CI-CD). Lo pendiente de mayor valor es la **Épica 6 (Planes + IA supervisada)**, el diferencial del TFG.
 
 ### Dependencias
@@ -227,23 +231,23 @@ Criterios de aceptación:
 *Como* administrador del consultorio *quiero* crear, listar y activar/desactivar usuarios *para* dar acceso a mi equipo.
 - Solo el rol `ADMIN` accede a estas acciones (permiso forzado en backend); cada acción queda auditada.
 
-**HU-07 · Ingreso con Google (PB-07) — ✅**
+**HU-06 · Ingreso con Google (PB-07) — ✅**
 *Como* usuario *quiero* entrar con mi cuenta de Google *para* no recordar otra contraseña.
 - Se verifica el ID token contra el Client ID; si el usuario es nuevo, completa los datos faltantes.
 
 ### Épica 2 — Gestión de pacientes
 
-**HU-08 · Ficha de paciente (PB-08, RF-07) — ✅**
+**HU-07 · Ficha de paciente (PB-08, RF-07) — ✅**
 *Como* profesional *quiero* dar de alta y editar pacientes con su ficha completa *para* tener sus datos ordenados.
 - Nombre, DNI, fecha de nacimiento, sexo, contacto, dirección y notas; el alta queda auditada.
 
-**HU-09 · Listado y baja lógica (PB-09, RF-08) — ✅**
+**HU-08 · Listado y baja lógica (PB-09, RF-08) — ✅**
 *Como* profesional *quiero* buscar/listar pacientes y darlos de baja/reactivar *para* gestionar mi cartera.
 - Búsqueda + paginado; la baja es lógica (no borra datos); todo filtrado por mi consultorio.
 
 ### Épica 3 — Registro clínico
 
-**HU-11 · Anamnesis del paciente (PB-11, RF-10) — ✅**
+**HU-09 · Anamnesis del paciente (PB-11, RF-10) — ✅**
 *Como* profesional *quiero* cargar la anamnesis (generales, hábitos, recordatorio de 24 h, antropometría) *para* tener su historia clínica y alimentar luego el plan.
 Criterios de aceptación:
 - **Dado** un paciente sin anamnesis, **cuando** guardo el formulario, **entonces** se crea su anamnesis (una por paciente).
@@ -251,15 +255,15 @@ Criterios de aceptación:
 - **Dado** un paciente de otro consultorio, **cuando** intento asociarle una anamnesis, **entonces** el sistema lo rechaza.
 - **Dado** una anamnesis cargada, **cuando** se genere un plan con IA, **entonces** sus campos relevantes quedan disponibles para el motor de reglas.
 
-**HU-12 · Plantilla de anamnesis (PB-12, RF-11/12) — ✅**
+**HU-10 · Plantilla de anamnesis (PB-12, RF-11/12) — ✅**
 *Como* profesional *quiero* adaptar y restablecer la plantilla de anamnesis *para* ajustarla a mi forma de trabajo.
 - Plantilla JSON por tenant; acción de reset a la de por defecto.
 
-**HU-13 · Métricas antropométricas (PB-13, RF-13) — ✅**
+**HU-11 · Métricas antropométricas (PB-13, RF-13) — ✅**
 *Como* profesional *quiero* registrar métricas en el tiempo *para* seguir la composición del paciente.
 - Peso, talla, IMC (calculado si falta), cintura y fecha de medición.
 
-**HU-14 · Evoluciones y tendencia (PB-14/PB-15, RF-14) — ✅**
+**HU-12 · Evoluciones y tendencia (PB-14/PB-15, RF-14) — ✅**
 *Como* profesional *quiero* registrar cada control y ver la evolución en un gráfico *para* evaluar el progreso.
 Criterios de aceptación:
 - **Dado** un control con peso y talla, **cuando** lo guardo, **entonces** el sistema registra la evolución y calcula el IMC.
@@ -268,23 +272,23 @@ Criterios de aceptación:
 
 ### Épica 4 — Agenda y turnos
 
-**HU-16 · Turnos con estado (PB-16, RF-15) — ✅**
+**HU-13 · Turnos con estado (PB-16, RF-15) — ✅**
 *Como* profesional *quiero* agendar turnos con estado y motivo, y poder cancelarlos/completarlos *para* organizar mi agenda.
 - Fecha-hora, duración, estado (`SCHEDULED`/`COMPLETED`/`CANCELLED`/`NO_SHOW`), motivo, fecha de cancelación.
 - Acciones de cancelar y completar; UI en la ficha del paciente.
 
-**HU-18 · Agenda/calendario global (PB-18, RF-16) — ⏳**
+**HU-14 · Agenda/calendario global (PB-18, RF-16) — ⏳**
 *Como* profesional *quiero* una vista de calendario del consultorio *para* ver todos los turnos de un vistazo. *(pendiente, Sprint 4)*
 
 ### Épica 5 — Panel
 
-**HU-19 · Dashboard (PB-19) — ✅**
+**HU-15 · Dashboard (PB-19) — ✅**
 *Como* profesional *quiero* un panel de inicio con métricas *para* ver el estado de mi consultorio.
 - Pacientes activos, pacientes nuevos y turnos de hoy, calculados en tiempo real y con estados vacíos.
 
 ### Épica 6 — Planes + IA supervisada ⭐ (núcleo, Sprint 4)
 
-**HU-25 · Generación de plan con IA supervisada (PB-20…PB-28, RF-IA-*) — ⏳**
+**HU-16 · Generación de plan con IA supervisada (PB-20…PB-28, RF-IA-*) — ⏳**
 *Como* profesional *quiero* que el sistema **proponga** un plan alimentario con IA, acotado por un motor de reglas y **sujeto a mi aprobación**, *para* ahorrar tiempo sin resignar el control clínico ni la seguridad del paciente.
 **Criterios de aceptación (restricciones de diseño de la tesis):**
 1. Antes de la IA, un **motor de reglas** calcula requerimiento energético y macros y deriva **restricciones duras** (patologías/alergias).
@@ -294,15 +298,19 @@ Criterios de aceptación:
 5. El plan nace en `BORRADOR_IA` y **el paciente no lo ve** hasta `APROBADO`/`COMPARTIDO`; la transición exige **aprobación profesional** (gate en backend, firma quién/cuándo/versión).
 6. Se registra la **trazabilidad** (prompt, proveedor, modelo, versión, costo) y el **consentimiento** del paciente.
 
-### Transversales (seguridad/infra)
+### Requerimientos transversales (NO son historias de usuario)
 
-**HU-T1 · Aislamiento multi-tenant (PB-T1, RNF-01) — ✅**
-*Como* dueño del sistema *quiero* que cada consultorio vea solo sus datos *para* garantizar la confidencialidad.
-- `tenant_id` en toda entidad + filtrado central; tests anti-fuga que verifican que ningún endpoint devuelve datos de otro tenant.
+Los ítems `PB-T*` del backlog son **requerimientos no funcionales / habilitadores
+técnicos**, no historias de usuario (no tienen un rol de negocio que persiga un valor).
+Se representan como **RNF** (ver `REQUERIMIENTOS.md`) y como parte de la **Definition of
+Done** (§5), y se verifican por **tests**, no por criterios de aceptación de usuario:
 
-**HU-T2 · Auditoría de eventos y acceso (PB-T2, RNF-04/03) — ✅**
-*Como* responsable de datos *quiero* un registro inmutable de eventos sensibles *para* poder rastrear quién hizo qué.
-- Login, reset, altas/bajas, alta de paciente y **acceso a datos clínicos** quedan registrados con actor, IP y timestamp.
+- **Aislamiento multi-tenant** (PB-T1, RNF-01): `tenant_id` en toda entidad + filtrado
+  central; tests anti-fuga que garantizan que ningún endpoint devuelve datos de otro tenant.
+- **Auditoría de eventos y acceso** (PB-T2, RNF-04/03): registro inmutable de eventos
+  sensibles (login, reset, altas/bajas, alta de paciente, acceso a datos clínicos) con
+  actor, IP y timestamp.
+- Resto de `PB-T*`: infraestructura, CI/CD, cifrado, backups, rate limiting, etc.
 
 ---
 
