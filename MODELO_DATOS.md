@@ -9,6 +9,16 @@
 > y se filtra por tenant (aislamiento multi-tenant, RNF-01). `created_at`/`updated_at`
 > son transversales (omitidos en el diagrama por claridad).
 
+## Justificación del diagrama elegido
+
+Se presenta un **Diagrama de Entidad-Relación (DER)** porque el prototipo usa una **base
+de datos relacional (PostgreSQL)**. El DER es el diagrama adecuado para modelar datos
+relacionales: representa entidades, atributos y las relaciones entre ellas mediante
+claves primarias (PK) y foráneas (FK), de forma normalizada. No se usan diagramas de
+clases (propios de un modelo orientado a objetos puro) ni de base NoSQL, ya que el
+almacenamiento es relacional. El **diccionario de datos** que acompaña al DER está en
+`DICCIONARIO_DATOS.md` (obligatorio porque los nombres técnicos están en inglés).
+
 ## Diagrama entidad-relación
 
 ```mermaid
