@@ -298,19 +298,26 @@ Criterios de aceptación:
 5. El plan nace en `BORRADOR_IA` y **el paciente no lo ve** hasta `APROBADO`/`COMPARTIDO`; la transición exige **aprobación profesional** (gate en backend, firma quién/cuándo/versión).
 6. Se registra la **trazabilidad** (prompt, proveedor, modelo, versión, costo) y el **consentimiento** del paciente.
 
-### Requerimientos transversales (NO son historias de usuario)
+### Requerimientos no funcionales (RNF) — cómo se tratan en Scrum
 
-Los ítems `PB-T*` del backlog son **requerimientos no funcionales / habilitadores
-técnicos**, no historias de usuario (no tienen un rol de negocio que persiga un valor).
-Se representan como **RNF** (ver `REQUERIMIENTOS.md`) y como parte de la **Definition of
-Done** (§5), y se verifican por **tests**, no por criterios de aceptación de usuario:
+En Scrum no hay un artefacto de RNF separado (eso es del camino UML). Un RNF **no se
+fuerza a historia de usuario**; se representa según su naturaleza:
+
+| Tipo de RNF | Dónde va | Ejemplos |
+|---|---|---|
+| Cualidad transversal (aplica a todo) | **Definition of Done** (§5) | Aislamiento por tenant (RNF-01), tests en verde, secretos fuera del repo (RNF-07) |
+| Específico de una historia | **Criterio de aceptación** de esa historia | Anti-enumeración (HU-04), contraseña cifrada (HU-02) |
+| Requiere trabajo dedicado | **Habilitador técnico** en el backlog (`PB-T*`): estimado y priorizado, sin formato "como usuario" | Cifrado en reposo (RNF-02), rate limiting (RNF-06), backups (RNF-17) |
+
+Los `PB-T*` del backlog son entonces **RNF / habilitadores técnicos**, no historias de
+usuario. La lista completa de RNF está en `REQUERIMIENTOS.md` (RNF-01…17). Dos ya
+implementados y verificados por tests:
 
 - **Aislamiento multi-tenant** (PB-T1, RNF-01): `tenant_id` en toda entidad + filtrado
   central; tests anti-fuga que garantizan que ningún endpoint devuelve datos de otro tenant.
 - **Auditoría de eventos y acceso** (PB-T2, RNF-04/03): registro inmutable de eventos
   sensibles (login, reset, altas/bajas, alta de paciente, acceso a datos clínicos) con
   actor, IP y timestamp.
-- Resto de `PB-T*`: infraestructura, CI/CD, cifrado, backups, rate limiting, etc.
 
 ---
 
