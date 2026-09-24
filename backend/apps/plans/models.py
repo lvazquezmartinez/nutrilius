@@ -41,6 +41,7 @@ class AIProvider(models.TextChoices):
     """Proveedor configurable, sin hardcodear (RF-IA-09)."""
     OPENAI = "OPENAI", "OpenAI"
     OPENROUTER = "OPENROUTER", "OpenRouter"
+    FAKE = "FAKE", "Fake (desarrollo/tests)"
 
 
 class NutritionPlan(TenantOwnedModel):
@@ -90,6 +91,38 @@ class NutritionPlan(TenantOwnedModel):
     def visible_to_patient(self) -> bool:
         """El paciente solo accede a planes aprobados o compartidos (RF-IA-06)."""
         return self.status in (PlanStatus.APROBADO, PlanStatus.COMPARTIDO)
+
+    # ── Máquina de estados (RF-IA-06). Transiciones válidas y gate de aprobación. ──
+    def submit_for_review(self):
+        if self.status != PlanStatus.BORRADOR_IA:
+            raise ValueError(f"No se puede enviar a revisión desde el estado {self.status}.")
+        self.status = PlanStatus.EN_REVISION
+        self.save(update_fields=["status", "updated_at"])
+
+    def approve(self, user):
+        """Aprobación profesional obligatoria: firma quién, cuándo y qué versión."""
+        from django.utils import timezone
+        if self.status not in (PlanStatus.BORRADOR_IA, PlanStatus.EN_REVISION):
+            raise ValueError(f"No se puede aprobar un plan en estado {self.status}.")
+        self.status = PlanStatus.APROBADO
+        self.approved_by = user
+        self.approved_at = timezone.now()
+        self.approved_version = (self.approved_version or 0) + 1
+        self.save(update_fields=["status", "approved_by", "approved_at",
+                                 "approved_version", "updated_at"])
+
+    def share(self, *, token: str):
+        """Compartir requiere estar aprobado; habilita el link con token revocable."""
+        if self.status not in (PlanStatus.APROBADO, PlanStatus.COMPARTIDO):
+            raise ValueError("Solo se puede compartir un plan aprobado.")
+        self.status = PlanStatus.COMPARTIDO
+        self.share_token = token
+        self.share_enabled = True
+        self.save(update_fields=["status", "share_token", "share_enabled", "updated_at"])
+
+    def revoke_share(self):
+        self.share_enabled = False
+        self.save(update_fields=["share_enabled", "updated_at"])
 
 
 class PlanTemplate(TenantOwnedModel):
