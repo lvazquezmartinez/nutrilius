@@ -46,6 +46,7 @@
   - [x] 01 Landing · 02 Login · 03 Registro
   - [x] 04 Dashboard · 05 Pacientes
   - [x] 06 Ficha–Datos · 07 Ficha–Anamnesis · 08 Ficha–Evoluciones (con gráfico) · 09 Ficha–Turnos
+  - [x] **11 Planes con IA** — *mockup* de HU-16, la pantalla **"sin codificar"** del módulo aún no construido (Fase 4). Muestra el flujo supervisado: motor de reglas → IA acotada → validación post-IA → **aprobación profesional** (máquina de estados) + trazabilidad y consentimiento. Fuente editable: `docs/mockup-planes-ia.html`.
   - Capturadas con **cuenta demo + datos sintéticos** (sin datos reales).
   - Falta (opcional): un **diagrama de flujo de navegación** entre pantallas para mostrar el "encadenamiento lógico".
 
@@ -64,4 +65,4 @@
 `.docx` por el agente de tesis, y la decisión del PO sobre el apartado de datos reales.
 
 ## Pendiente de decisión del PO
-- Redacción del apartado de **datos reales** (demo con cuenta vacía; profesionales reales bajo su responsabilidad; Ley 25.326).
+- ~~Redacción del apartado de **datos reales**~~ — **Decidido:** durante la tesis solo se usan la cuenta demo y datos sintéticos; no se cargan pacientes reales (redactado en Alcances del TFG).
