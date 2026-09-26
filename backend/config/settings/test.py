@@ -10,3 +10,8 @@ CELERY_TASK_ALWAYS_EAGER = True
 
 # Cache local en memoria (no depende de Redis para correr tests).
 CACHES = {"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"}}
+
+# IA: los tests SIEMPRE usan el FakeProvider (nunca llaman a la API real).
+AI_PROVIDER = "FAKE"
+AI_API_KEY = ""
+

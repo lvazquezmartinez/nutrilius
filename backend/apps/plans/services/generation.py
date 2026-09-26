@@ -69,6 +69,7 @@ def generate_for_plan(plan: NutritionPlan, *, goal: str,
     provider = get_provider()
     result = provider.generate(payload)
     content = result.get("content", {})
+    usage = result.get("usage", {}) or {}
 
     # 5. Validación post-IA
     report = validation.validate_plan(content, targets)
@@ -92,6 +93,9 @@ def generate_for_plan(plan: NutritionPlan, *, goal: str,
         prompt_version="v1",
         request_payload=payload,
         response_raw=result.get("raw", {}),
+        input_tokens=usage.get("input_tokens"),
+        output_tokens=usage.get("output_tokens"),
+        estimated_cost_usd=usage.get("estimated_cost_usd"),
         validation_passed=report.passed,
         validation_report=report.as_dict(),
         created_by=user,
