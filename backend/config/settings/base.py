@@ -168,6 +168,13 @@ APP_BACKEND_URL = env("APP_BACKEND_URL", default="http://localhost:8000")
 # Login con Google (Sign in with Google). Client ID de tipo "Web application".
 GOOGLE_OAUTH_CLIENT_ID = env("GOOGLE_OAUTH_CLIENT_ID", default="")
 
+# IA supervisada — proveedor/modelo configurables (RF-IA-09). Sin API key → FakeProvider.
+# La key vive en Secret Manager (prod) / .env (dev), nunca en el repo (RNF-07).
+AI_PROVIDER = env("AI_PROVIDER", default="")            # OPENAI / OPENROUTER / "" (fake)
+AI_MODEL = env("AI_MODEL", default="gpt-4o-mini")
+AI_API_KEY = env("AI_API_KEY", default="")
+AI_BASE_URL = env("AI_BASE_URL", default="")            # opcional (OpenRouter u otro compatible)
+
 # Vencimientos de tokens de acción (horas)
 EMAIL_VERIFICATION_TTL_HOURS = env.int("EMAIL_VERIFICATION_TTL_HOURS", default=48)
 PASSWORD_RESET_TTL_HOURS = env.int("PASSWORD_RESET_TTL_HOURS", default=2)
