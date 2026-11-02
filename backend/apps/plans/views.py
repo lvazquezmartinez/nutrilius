@@ -18,6 +18,7 @@ from rest_framework.views import APIView
 from apps.audit.models import AuditEvent
 from apps.audit.services import log_event
 from apps.common.drf import TenantScopedModelViewSet
+from apps.common.ratelimit import PublicEndpointThrottle
 from apps.tenants.models import TenantSettings
 
 from .models import NutritionPlan, PlanGoal, PlanStatus, PatientConsent
@@ -159,6 +160,7 @@ class PublicPlanPDFView(APIView):
     """Acceso público al PDF del plan por token, sin login (HU-15 / RF-25). Revocable."""
     permission_classes = [AllowAny]
     authentication_classes = []
+    throttle_classes = [PublicEndpointThrottle]
 
     def get(self, request, token):
         plan = NutritionPlan.all_objects.filter(

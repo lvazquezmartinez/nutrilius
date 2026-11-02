@@ -106,8 +106,25 @@ class LoginView(TokenObtainPairView):
     serializer_class = EmailTokenObtainPairSerializer
 
     def post(self, request, *args, **kwargs):
-        response = super().post(request, *args, **kwargs)
+        from rest_framework.response import Response as DRFResponse
+        from apps.common.ratelimit import (
+            client_ip, login_blocked, record_login_failure, reset_login_failures,
+        )
+        ip = client_ip(request)
+        if login_blocked(ip):
+            return DRFResponse(
+                {"detail": "Demasiados intentos fallidos. Probá de nuevo en unos minutos."},
+                status=429)
+        try:
+            response = super().post(request, *args, **kwargs)
+        except Exception:
+            # simplejwt lanza excepción ante credenciales inválidas (no devuelve 401).
+            record_login_failure(ip)
+            log_event(AuditEvent.Action.LOGIN_FAILED, request=request,
+                      metadata={"email": request.data.get("email", "")})
+            raise
         if response.status_code == 200:
+            reset_login_failures(ip)
             user = User.objects.filter(email__iexact=request.data.get("email", "")).first()
             log_event(AuditEvent.Action.LOGIN, actor=user, request=request)
         return response
