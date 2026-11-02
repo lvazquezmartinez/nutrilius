@@ -14,6 +14,12 @@ variable "app_name" {
   default = "nutrilius"
 }
 
+variable "backup_region" {
+  type        = string
+  default     = "southamerica-west1"
+  description = "Región distinta para los backups cross-region (HU-25)"
+}
+
 variable "domain" {
   type        = string
   description = "Dominio del Load Balancer (certificado SSL administrado). Ej: nutrilius.com.ar"

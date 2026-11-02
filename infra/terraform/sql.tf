@@ -12,8 +12,16 @@ resource "google_sql_database_instance" "main" {
     availability_type = "ZONAL"
     disk_autoresize   = true
 
+    # Backups y recuperación a un momento determinado (HU-25 / RNF-17).
     backup_configuration {
-      enabled = true
+      enabled                        = true
+      start_time                     = "03:00" # 03:00 (hora de la región)
+      point_in_time_recovery_enabled = true    # PITR
+      transaction_log_retention_days = 7        # recuperación puntual de los últimos 7 días
+      backup_retention_settings {
+        retained_backups = 30 # 30 copias
+        retention_unit   = "COUNT"
+      }
     }
 
     ip_configuration {
