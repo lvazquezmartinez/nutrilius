@@ -17,7 +17,7 @@ from apps.clinical.models import Anamnesis
 
 from ..models import NutritionPlan, PlanGeneration, PlanStatus, PatientConsent
 from . import rules, validation
-from .ai import get_provider
+from .ai import PROMPT_VERSION, get_provider
 
 
 class ConsentError(Exception):
@@ -90,7 +90,7 @@ def generate_for_plan(plan: NutritionPlan, *, goal: str,
         plan=plan,
         provider=(provider.name or "fake").upper(),
         model=provider.model,
-        prompt_version="v1",
+        prompt_version=PROMPT_VERSION,
         request_payload=payload,
         response_raw=result.get("raw", {}),
         input_tokens=usage.get("input_tokens"),
