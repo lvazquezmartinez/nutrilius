@@ -7,16 +7,21 @@ Todo con scope por tenant (un plan de otro consultorio responde 404).
 """
 import secrets
 
+from django.http import Http404, HttpResponse
 from django.utils import timezone
 from rest_framework import status
 from rest_framework.decorators import action
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from apps.audit.models import AuditEvent
 from apps.audit.services import log_event
 from apps.common.drf import TenantScopedModelViewSet
+from apps.tenants.models import TenantSettings
 
-from .models import NutritionPlan, PlanGoal, PatientConsent
+from .models import NutritionPlan, PlanGoal, PlanStatus, PatientConsent
+from .services import pdf as pdf_service
 from .serializers import (
     NutritionPlanSerializer, PatientConsentSerializer, PlanGenerationSerializer,
 )
@@ -96,6 +101,21 @@ class NutritionPlanViewSet(TenantScopedModelViewSet):
         gens = plan.generations.order_by("-created_at")
         return Response(PlanGenerationSerializer(gens, many=True).data)
 
+    @action(detail=True, methods=["get"])
+    def pdf(self, request, pk=None):
+        """PDF del plan con branding del consultorio (HU-14). Solo plan aprobado/compartido."""
+        plan = self.get_object()
+        if plan.status not in (PlanStatus.APROBADO, PlanStatus.COMPARTIDO):
+            return Response({"detail": "El PDF solo está disponible para planes aprobados."},
+                            status=status.HTTP_409_CONFLICT)
+        settings_obj = TenantSettings.objects.filter(tenant_id=self.get_tenant_id()).first()
+        data = pdf_service.build_plan_pdf(plan, settings_obj)
+        log_event(AuditEvent.Action.PDF_EXPORTED, actor=request.user, request=request,
+                  entity="NutritionPlan", entity_id=str(plan.id))
+        resp = HttpResponse(data, content_type="application/pdf")
+        resp["Content-Disposition"] = f'inline; filename="plan-{plan.id}.pdf"'
+        return resp
+
     def _transition(self, fn):
         plan = self.get_object()
         try:
@@ -133,3 +153,22 @@ class PatientConsentViewSet(TenantScopedModelViewSet):
         log_event(AuditEvent.Action.CONSENT_REVOKED, actor=request.user,
                   entity="PatientConsent", entity_id=str(consent.id))
         return Response(self.get_serializer(consent).data)
+
+
+class PublicPlanPDFView(APIView):
+    """Acceso público al PDF del plan por token, sin login (HU-15 / RF-25). Revocable."""
+    permission_classes = [AllowAny]
+    authentication_classes = []
+
+    def get(self, request, token):
+        plan = NutritionPlan.all_objects.filter(
+            share_token=token, share_enabled=True, status=PlanStatus.COMPARTIDO).first()
+        if plan is None:
+            raise Http404("Enlace no válido o revocado.")
+        settings_obj = TenantSettings.objects.filter(tenant_id=plan.tenant_id).first()
+        data = pdf_service.build_plan_pdf(plan, settings_obj)
+        log_event(AuditEvent.Action.PDF_EXPORTED, tenant_id=plan.tenant_id, request=request,
+                  entity="NutritionPlan", entity_id=str(plan.id), metadata={"public": True})
+        resp = HttpResponse(data, content_type="application/pdf")
+        resp["Content-Disposition"] = 'inline; filename="plan.pdf"'
+        return resp
