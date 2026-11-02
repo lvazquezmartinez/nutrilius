@@ -144,6 +144,14 @@ REST_FRAMEWORK = {
 LOGIN_MAX_ATTEMPTS = env.int("LOGIN_MAX_ATTEMPTS", default=5)
 LOGIN_BLOCK_SECONDS = env.int("LOGIN_BLOCK_SECONDS", default=15 * 60)
 
+# Cifrado en reposo de campos clínicos sensibles (HU-22 / RNF-02). Claves Fernet
+# (lista: la primera cifra, todas descifran → permite rotación). En producción se
+# inyecta desde Secret Manager; la de por defecto es solo para desarrollo/tests.
+FIELD_ENCRYPTION_KEYS = env.list(
+    "FIELD_ENCRYPTION_KEYS",
+    default=["2uWESTrtE_-HJywM3mv90jfmQFSLeD363bT9vS-WkH8="],  # DEV ONLY
+)
+
 AUTH_USER_MODEL = "identity.User"
 
 from datetime import timedelta  # noqa: E402
