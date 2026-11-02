@@ -4,6 +4,7 @@ import { useAuthStore } from '@/store/authStore'
 
 import { LandingPage }        from '@/pages/landing/LandingPage'
 import { ComingSoon }         from '@/pages/ComingSoon'
+import { ConfigPage }         from '@/pages/config/ConfigPage'
 import { LoginPage }          from '@/pages/auth/LoginPage'
 import { RegisterPage }       from '@/pages/auth/RegisterPage'
 import { ConfirmEmailPage }   from '@/pages/auth/ConfirmEmailPage'
@@ -55,7 +56,7 @@ export default function App() {
             {/* En alcance, aún no construidos → placeholder (no rebotan a la landing) */}
             <Route path="/agenda"            element={<ComingSoon title="Agenda" description="La gestión de turnos y el calendario del consultorio." />} />
             <Route path="/planes"            element={<ComingSoon title="Planes con IA" description="Generación de planes alimentarios asistida por IA, con tu revisión y aprobación." />} />
-            <Route path="/configuracion"     element={<ComingSoon title="Configuración" description="Datos del consultorio, usuarios y preferencias." />} />
+            <Route path="/configuracion"     element={<ConfigPage />} />
             <Route path="/admin"             element={<ComingSoon title="Administración" description="Consola de administración de la plataforma." />} />
           </Route>
 

@@ -22,6 +22,12 @@ export const plansService = {
     Promise<NutritionPlan> =>
     api.patch(`/plans/${planId}/`, patch).then(r => r.data),
 
+  pdfBlob: (planId: number): Promise<Blob> =>
+    api.get(`/plans/${planId}/pdf/`, { responseType: 'blob' }).then(r => r.data),
+
+  publicPdfUrl: (token: string): string =>
+    `${window.location.origin}/api/public/plan/${token}/pdf`,
+
   submit:      (planId: number): Promise<NutritionPlan> => api.post(`/plans/${planId}/submit/`).then(r => r.data),
   approve:     (planId: number): Promise<NutritionPlan> => api.post(`/plans/${planId}/approve/`).then(r => r.data),
   share:       (planId: number): Promise<NutritionPlan> => api.post(`/plans/${planId}/share/`).then(r => r.data),
