@@ -7,8 +7,9 @@ import { Button } from '@/components/ui/Button'
 import { AnamnesisTab } from './tabs/AnamnesisTab'
 import { EvolutionsTab } from './tabs/EvolutionsTab'
 import { VisitsTab } from './tabs/VisitsTab'
+import { PlanTab } from './tabs/PlanTab'
 
-type Tab = 'datos' | 'anamnesis' | 'evoluciones' | 'visitas'
+type Tab = 'datos' | 'anamnesis' | 'evoluciones' | 'visitas' | 'plan'
 
 const SEX_LABELS: Record<string, string> = {
   Male: 'Masculino', Female: 'Femenino', Other: 'Otro',
@@ -151,6 +152,7 @@ export function PatientDetailPage() {
             { key: 'anamnesis',   label: 'Anamnesis' },
             { key: 'evoluciones', label: 'Evoluciones' },
             { key: 'visitas',     label: 'Turnos' },
+            { key: 'plan',        label: 'Plan' },
           ] as const).map(t => (
             <button
               key={t.key}
@@ -226,6 +228,12 @@ export function PatientDetailPage() {
         {tab === 'visitas' && id && (
           <div className="max-w-2xl">
             <VisitsTab patientId={id} />
+          </div>
+        )}
+
+        {tab === 'plan' && id && (
+          <div className="max-w-4xl">
+            <PlanTab patientId={id} />
           </div>
         )}
       </div>
