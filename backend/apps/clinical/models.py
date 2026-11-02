@@ -9,6 +9,7 @@ from django.conf import settings
 from django.db import models
 from django.utils import timezone
 
+from apps.common.fields import EncryptedTextField
 from apps.common.models import TenantOwnedModel
 
 
@@ -64,10 +65,10 @@ class Anamnesis(TenantOwnedModel):
 
     # 1 · Generales
     occupation = models.CharField(max_length=200, blank=True)
-    reason_for_consultation = models.TextField(blank=True)
+    reason_for_consultation = EncryptedTextField(blank=True)
 
     # 2 · Antecedentes / hábitos tóxicos
-    medications = models.TextField(blank=True)
+    medications = EncryptedTextField(blank=True)
     alcohol_consumption = models.CharField(max_length=120, blank=True)
     smoking_status = models.CharField(max_length=120, blank=True)
     digestive_symptoms = models.TextField(blank=True)
@@ -104,7 +105,7 @@ class Anamnesis(TenantOwnedModel):
     arm_cm = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
 
     # 7 · Cierre
-    final_comments = models.TextField(blank=True)
+    final_comments = EncryptedTextField(blank=True)
 
     data_json = models.JSONField(default=dict, blank=True)
     created_by = models.ForeignKey(
@@ -194,7 +195,7 @@ class Evolution(TenantOwnedModel):
     blood_pressure_systolic = models.PositiveIntegerField(null=True, blank=True)
     blood_pressure_diastolic = models.PositiveIntegerField(null=True, blank=True)
 
-    clinical_notes = models.TextField(blank=True)
+    clinical_notes = EncryptedTextField(blank=True)
     dietary_assessment = models.TextField(blank=True)
     next_visit_objectives = models.TextField(blank=True)
 
