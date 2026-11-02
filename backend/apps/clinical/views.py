@@ -1,7 +1,8 @@
+from django.forms.models import model_to_dict
 from django.utils import timezone
 from rest_framework import status
 from rest_framework.decorators import action
-from rest_framework.exceptions import ValidationError
+from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.filters import SearchFilter
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -10,6 +11,7 @@ from rest_framework.views import APIView
 from apps.audit.models import AuditEvent
 from apps.audit.services import log_event
 from apps.common.drf import TenantScopedModelViewSet
+from apps.identity.models import Role
 
 from .models import (
     DEFAULT_ANAMNESIS_TEMPLATE,
@@ -61,6 +63,53 @@ class PatientViewSet(TenantScopedModelViewSet):
         patient.save(update_fields=["is_active"])
         return Response(self.get_serializer(patient).data)
 
+    def _require_admin(self, request):
+        if getattr(request.user, "role", None) != Role.ADMIN:
+            raise PermissionDenied("Requiere rol administrador.")
+
+    @action(detail=True, methods=["get"], url_path="access-log")
+    def access_log(self, request, pk=None):
+        """HU-20: historial de accesos (lectura) a la ficha del paciente. Solo ADMIN."""
+        self._require_admin(request)
+        self.get_object()  # valida que el paciente sea del tenant (404 si no)
+        events = AuditEvent.objects.filter(
+            tenant_id=self.get_tenant_id(), action=AuditEvent.Action.CLINICAL_READ,
+            entity_id=str(pk)).select_related("actor").order_by("-created_at")[:100]
+        return Response([{
+            "actor": getattr(e.actor, "email", None), "entity": e.entity,
+            "at": e.created_at, "ip": e.ip_address,
+        } for e in events])
+
+    @action(detail=True, methods=["get"])
+    def export(self, request, pk=None):
+        """HU-24 (ARCO): exporta todos los datos del paciente. Solo ADMIN. Auditado."""
+        self._require_admin(request)
+        p = self.get_object()
+        data = {
+            "patient": model_to_dict(p, exclude=["tenant"]),
+            "anamnesis": list(Anamnesis.all_objects.filter(patient=p).values()),
+            "metrics": list(PatientMetric.all_objects.filter(patient=p).values()),
+            "evolutions": list(Evolution.all_objects.filter(patient=p).values()),
+            "visits": list(p.visits.values()),
+        }
+        log_event(AuditEvent.Action.DATA_EXPORTED, actor=request.user, request=request,
+                  entity="Patient", entity_id=str(p.id))
+        return Response(data)
+
+    @action(detail=True, methods=["post"])
+    def anonymize(self, request, pk=None):
+        """HU-24 (ARCO): anonimiza los datos identificatorios ante un pedido de supresión."""
+        self._require_admin(request)
+        p = self.get_object()
+        p.first_name, p.last_name = "Paciente", "Anonimizado"
+        p.dni = p.email = p.phone = p.address = ""
+        p.notes = ""
+        p.is_active = False
+        p.save()
+        log_event(AuditEvent.Action.DATA_ANONYMIZED, actor=request.user, request=request,
+                  entity="Patient", entity_id=str(p.id))
+        return Response(self.get_serializer(p).data)
+
 
 class _PatientChildViewSet(TenantScopedModelViewSet):
     """Base para recursos colgados de un paciente (anamnesis, métricas, evoluciones)."""
@@ -71,6 +120,16 @@ class _PatientChildViewSet(TenantScopedModelViewSet):
         if patient is None or patient.tenant_id != self.get_tenant_id():
             raise ValidationError({"patient": "Paciente inválido para este consultorio."})
         super().perform_create(serializer)
+
+    def list(self, request, *args, **kwargs):
+        # HU-20: auditar el acceso de lectura a datos clínicos del paciente.
+        response = super().list(request, *args, **kwargs)
+        pid = request.query_params.get("patient")
+        if pid:
+            log_event(AuditEvent.Action.CLINICAL_READ, actor=request.user, request=request,
+                      entity=self.queryset.model.__name__, entity_id=pid,
+                      metadata={"via": self.queryset.model.__name__})
+        return response
 
 
 class AnamnesisViewSet(_PatientChildViewSet):
