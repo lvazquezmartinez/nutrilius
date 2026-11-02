@@ -19,7 +19,13 @@ class AuditEvent(models.Model):
         USER_TOGGLED = "USER_TOGGLED", "Activación/desactivación de usuario"
         PATIENT_CREATED = "PATIENT_CREATED", "Alta de paciente"
         CLINICAL_READ = "CLINICAL_READ", "Acceso a datos clínicos"
-        # Fases siguientes: PLAN_GENERATED, PDF_SHARED, etc.
+        PLAN_GENERATED = "PLAN_GENERATED", "Plan generado por IA"
+        PLAN_APPROVED = "PLAN_APPROVED", "Plan aprobado"
+        PLAN_SHARED = "PLAN_SHARED", "Plan compartido"
+        PDF_EXPORTED = "PDF_EXPORTED", "PDF exportado"
+        CONSENT_GRANTED = "CONSENT_GRANTED", "Consentimiento de IA otorgado"
+        CONSENT_REVOKED = "CONSENT_REVOKED", "Consentimiento de IA revocado"
+        CONFIG_UPDATED = "CONFIG_UPDATED", "Configuración del consultorio actualizada"
 
     # tenant_id nullable: eventos previos al tenant (p. ej. login fallido) o de super admin.
     tenant_id = models.PositiveBigIntegerField(null=True, blank=True, db_index=True)
