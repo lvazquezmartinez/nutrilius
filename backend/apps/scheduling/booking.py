@@ -17,6 +17,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.clinical.models import Patient
+from apps.common.ratelimit import PublicEndpointThrottle
 from apps.tenants.models import Tenant, TenantSettings
 
 from .models import Visit, VisitStatus
@@ -69,6 +70,7 @@ class PublicBookingView(APIView):
     """GET: info del consultorio + horarios libres. POST: reservar turno."""
     permission_classes = [AllowAny]
     authentication_classes = []
+    throttle_classes = [PublicEndpointThrottle]
 
     def get(self, request, token):
         tenant = tenant_from_token(token)

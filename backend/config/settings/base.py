@@ -136,7 +136,13 @@ REST_FRAMEWORK = {
     ),
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.LimitOffsetPagination",
     "PAGE_SIZE": 20,
+    # Rate limiting de endpoints públicos (HU-23): reservas y enlaces públicos.
+    "DEFAULT_THROTTLE_RATES": {"public": "40/hour"},
 }
+
+# Límite de intentos de login por IP (HU-23): N fallos → bloqueo temporal.
+LOGIN_MAX_ATTEMPTS = env.int("LOGIN_MAX_ATTEMPTS", default=5)
+LOGIN_BLOCK_SECONDS = env.int("LOGIN_BLOCK_SECONDS", default=15 * 60)
 
 AUTH_USER_MODEL = "identity.User"
 
