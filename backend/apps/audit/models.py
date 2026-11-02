@@ -26,6 +26,8 @@ class AuditEvent(models.Model):
         CONSENT_GRANTED = "CONSENT_GRANTED", "Consentimiento de IA otorgado"
         CONSENT_REVOKED = "CONSENT_REVOKED", "Consentimiento de IA revocado"
         CONFIG_UPDATED = "CONFIG_UPDATED", "Configuración del consultorio actualizada"
+        DATA_EXPORTED = "DATA_EXPORTED", "Exportación de datos del paciente (ARCO)"
+        DATA_ANONYMIZED = "DATA_ANONYMIZED", "Anonimización de datos del paciente (ARCO)"
 
     # tenant_id nullable: eventos previos al tenant (p. ej. login fallido) o de super admin.
     tenant_id = models.PositiveBigIntegerField(null=True, blank=True, db_index=True)
