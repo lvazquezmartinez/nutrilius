@@ -11,6 +11,6 @@ urlpatterns = [
     path("api/", include("apps.dashboard.urls")),     # dashboard (métricas del tenant)
     path("api/", include("apps.tenants.urls")),        # HU-17: configuración del consultorio
     path("api/", include("apps.plans.urls")),          # Fase 4: planes + IA supervisada
-    path("public/", include("apps.plans.public_urls")),  # HU-15: PDF público por token
+    path("api/public/", include("apps.plans.public_urls")),  # HU-15: PDF público por token (bajo /api para el LB)
     # ...
 ]

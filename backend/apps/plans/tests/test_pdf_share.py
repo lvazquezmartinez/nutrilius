@@ -45,9 +45,9 @@ def test_pdf_publico_por_token_revocable(approved):
     plan.share(token="tok-abc-123")
     anon = APIClient()
 
-    r = anon.get("/public/plan/tok-abc-123/pdf")
+    r = anon.get("/api/public/plan/tok-abc-123/pdf")
     assert r.status_code == 200 and r.content[:4] == b"%PDF"
 
     plan.revoke_share()
-    assert anon.get("/public/plan/tok-abc-123/pdf").status_code == 404   # revocado
-    assert anon.get("/public/plan/inexistente/pdf").status_code == 404    # token inválido
+    assert anon.get("/api/public/plan/tok-abc-123/pdf").status_code == 404   # revocado
+    assert anon.get("/api/public/plan/inexistente/pdf").status_code == 404    # token inválido

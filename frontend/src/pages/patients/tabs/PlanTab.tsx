@@ -345,6 +345,14 @@ function StateFlow({ plan, onRegenerate, regenLoading, onSubmit, onApprove, onSh
 }) {
   const states: PlanStatus[] = ['BORRADOR_IA', 'EN_REVISION', 'APROBADO', 'COMPARTIDO']
   const idx = states.indexOf(plan.status)
+  const approved = plan.status === 'APROBADO' || plan.status === 'COMPARTIDO'
+
+  const downloadPdf = async () => {
+    const blob = await plansService.pdfBlob(plan.id)
+    const url = URL.createObjectURL(blob)
+    window.open(url, '_blank')
+    setTimeout(() => URL.revokeObjectURL(url), 10000)
+  }
   return (
     <div className="bg-surface rounded-lg border border-border-base p-5">
       <div className="flex items-center justify-between gap-4 flex-wrap">
@@ -367,6 +375,7 @@ function StateFlow({ plan, onRegenerate, regenLoading, onSubmit, onApprove, onSh
               <Button size="sm" onClick={onApprove}>Aprobar plan</Button>
             </>
           )}
+          {approved && <Button size="sm" variant="secondary" onClick={downloadPdf}>Descargar PDF</Button>}
           {plan.status === 'APROBADO' && <Button size="sm" onClick={onShare}>Compartir con el paciente</Button>}
           {plan.status === 'COMPARTIDO' && (
             <Button size="sm" variant="secondary" onClick={onRevoke}>Revocar enlace</Button>
@@ -379,9 +388,15 @@ function StateFlow({ plan, onRegenerate, regenLoading, onSubmit, onApprove, onSh
         </p>
       )}
       {plan.status === 'COMPARTIDO' && plan.share_enabled && (
-        <p className="text-xs text-text-muted mt-3 font-mono break-all">
-          Enlace: /plan/{plan.share_token}
-        </p>
+        <div className="mt-3 flex items-center gap-2">
+          <p className="text-xs text-text-muted font-mono break-all flex-1">
+            Enlace del paciente: {plansService.publicPdfUrl(plan.share_token)}
+          </p>
+          <button className="text-xs font-medium text-primary-700 flex-shrink-0"
+                  onClick={() => navigator.clipboard?.writeText(plansService.publicPdfUrl(plan.share_token))}>
+            Copiar
+          </button>
+        </div>
       )}
     </div>
   )
