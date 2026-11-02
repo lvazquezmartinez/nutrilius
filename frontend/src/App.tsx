@@ -6,6 +6,7 @@ import { LandingPage }        from '@/pages/landing/LandingPage'
 import { ComingSoon }         from '@/pages/ComingSoon'
 import { ConfigPage }         from '@/pages/config/ConfigPage'
 import { AgendaPage }         from '@/pages/agenda/AgendaPage'
+import { BookingPage }        from '@/pages/booking/BookingPage'
 import { LoginPage }          from '@/pages/auth/LoginPage'
 import { RegisterPage }       from '@/pages/auth/RegisterPage'
 import { ConfirmEmailPage }   from '@/pages/auth/ConfirmEmailPage'
@@ -48,6 +49,7 @@ export default function App() {
           <Route path="/confirmar-email"    element={<ConfirmEmailPage />} />
           <Route path="/recuperar-password" element={<ForgotPasswordPage />} />
           <Route path="/nueva-password"     element={<ResetPasswordPage />} />
+          <Route path="/reservar/:token"    element={<BookingPage />} />  {/* HU-18: reserva pública */}
 
           {/* App privada con shell */}
           <Route element={<PrivateRoute><AppShell /></PrivateRoute>}>
