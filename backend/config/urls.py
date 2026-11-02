@@ -2,6 +2,8 @@
 from django.contrib import admin
 from django.urls import include, path
 
+from apps.scheduling.booking import PublicBookingView as BookingView
+
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("", include("apps.common.urls")),  # health checks
@@ -12,5 +14,6 @@ urlpatterns = [
     path("api/", include("apps.tenants.urls")),        # HU-17: configuración del consultorio
     path("api/", include("apps.plans.urls")),          # Fase 4: planes + IA supervisada
     path("api/public/", include("apps.plans.public_urls")),  # HU-15: PDF público por token (bajo /api para el LB)
+    path("api/public/booking/<str:token>", BookingView.as_view(), name="public-booking"),  # HU-18
     # ...
 ]

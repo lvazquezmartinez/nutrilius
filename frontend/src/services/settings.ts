@@ -7,6 +7,7 @@ export interface TenantSettings {
   logo_url: string
   slug: string | null
   plan_type: string
+  booking_token: string
 }
 
 export const settingsService = {

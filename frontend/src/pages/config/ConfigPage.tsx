@@ -63,6 +63,22 @@ export function ConfigPage() {
           <p className="text-xs text-text-muted pt-1">Solo el administrador puede editar esta configuración.</p>
         )}
       </div>
+
+      {data?.booking_token && (
+        <div className="bg-surface rounded-lg border border-border-base p-6 mt-4">
+          <h2 className="text-sm font-semibold text-text-primary mb-1">Enlace público de reservas</h2>
+          <p className="text-xs text-text-muted mb-3">Compartilo con tus pacientes: reservan un turno sin registrarse.</p>
+          <div className="flex items-center gap-2">
+            <code className="flex-1 text-xs bg-subtle rounded px-3 py-2 break-all">
+              {`${window.location.origin}/reservar/${data.booking_token}`}
+            </code>
+            <Button size="sm" variant="secondary"
+              onClick={() => navigator.clipboard?.writeText(`${window.location.origin}/reservar/${data.booking_token}`)}>
+              Copiar
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
