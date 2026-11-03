@@ -40,3 +40,10 @@ STORAGES = {
         "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
     },
 }
+
+# ─── Cache: local por instancia (serverless sin Redis) ───
+# En Cloud Run no hay Redis; usamos cache en memoria por instancia. Suficiente para
+# el rate limiting del prototipo (el bloqueo es por instancia; documentado como deuda).
+CACHES = {
+    "default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"},
+}
