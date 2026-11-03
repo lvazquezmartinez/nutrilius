@@ -11,6 +11,7 @@ locals {
     "smtp-user",
     "smtp-password",
     "google-oauth-client-id",
+    "field-encryption-keys", # HU-22: clave(s) Fernet de cifrado en reposo
   ]
 }
 
