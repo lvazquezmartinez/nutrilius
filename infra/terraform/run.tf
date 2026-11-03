@@ -15,6 +15,8 @@ locals {
     GCP_PROJECT_ID         = var.project_id
     GCP_REGION             = var.region
     GCP_TASKS_QUEUE        = google_cloud_tasks_queue.default.name
+    AI_PROVIDER            = "openai"
+    AI_MODEL               = "gpt-4o-mini"
     SMTP_HOST              = "smtp.envialosimple.email"
     SMTP_PORT              = "587"
     SMTP_USE_TLS           = "true"
@@ -26,6 +28,7 @@ locals {
     POSTGRES_PASSWORD = google_secret_manager_secret.db_password.secret_id
     DJANGO_SECRET_KEY = "django-secret-key"
     AI_API_KEY             = "ai-api-key"
+    FIELD_ENCRYPTION_KEYS  = "field-encryption-keys"
     SMTP_USER              = "smtp-user"
     SMTP_PASSWORD          = "smtp-password"
     GOOGLE_OAUTH_CLIENT_ID = "google-oauth-client-id"
