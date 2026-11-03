@@ -12,16 +12,25 @@ def client_ip(request) -> str:
 
 
 def login_blocked(ip: str) -> bool:
-    return cache.get(f"login_fail:{ip}", 0) >= settings.LOGIN_MAX_ATTEMPTS
+    try:
+        return cache.get(f"login_fail:{ip}", 0) >= settings.LOGIN_MAX_ATTEMPTS
+    except Exception:
+        return False  # fail-open: un problema de cache no debe impedir el login
 
 
 def record_login_failure(ip: str) -> None:
-    key = f"login_fail:{ip}"
-    cache.set(key, cache.get(key, 0) + 1, settings.LOGIN_BLOCK_SECONDS)
+    try:
+        key = f"login_fail:{ip}"
+        cache.set(key, cache.get(key, 0) + 1, settings.LOGIN_BLOCK_SECONDS)
+    except Exception:
+        pass
 
 
 def reset_login_failures(ip: str) -> None:
-    cache.delete(f"login_fail:{ip}")
+    try:
+        cache.delete(f"login_fail:{ip}")
+    except Exception:
+        pass
 
 
 class PublicEndpointThrottle(AnonRateThrottle):
