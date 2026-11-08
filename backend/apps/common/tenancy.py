@@ -4,7 +4,7 @@ Contexto de tenant por request (aislamiento multi-tenant — RNF-01 / DS-01).
 `TenantMiddleware` toma el tenant del usuario autenticado y lo deja en un
 context-var accesible por los managers. `TenantManager` filtra automáticamente por
 ese tenant, de modo que ningún query devuelva datos de otro consultorio salvo que
-se pida explícitamente (`all_tenants()`), reservado para SUPER_ADMIN / tareas.
+se pida explícitamente (`all_tenants()`), reservado para tareas administrativas.
 """
 from contextvars import ContextVar
 

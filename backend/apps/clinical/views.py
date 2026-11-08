@@ -2,7 +2,7 @@ from django.forms.models import model_to_dict
 from django.utils import timezone
 from rest_framework import status
 from rest_framework.decorators import action
-from rest_framework.exceptions import PermissionDenied, ValidationError
+from rest_framework.exceptions import ValidationError
 from rest_framework.filters import SearchFilter
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -11,7 +11,6 @@ from rest_framework.views import APIView
 from apps.audit.models import AuditEvent
 from apps.audit.services import log_event
 from apps.common.drf import TenantScopedModelViewSet
-from apps.identity.models import Role
 
 from .models import (
     DEFAULT_ANAMNESIS_TEMPLATE,
@@ -63,14 +62,9 @@ class PatientViewSet(TenantScopedModelViewSet):
         patient.save(update_fields=["is_active"])
         return Response(self.get_serializer(patient).data)
 
-    def _require_admin(self, request):
-        if getattr(request.user, "role", None) != Role.ADMIN:
-            raise PermissionDenied("Requiere rol administrador.")
-
     @action(detail=True, methods=["get"], url_path="access-log")
     def access_log(self, request, pk=None):
-        """HU-20: historial de accesos (lectura) a la ficha del paciente. Solo ADMIN."""
-        self._require_admin(request)
+        """HU-20: historial de accesos (lectura) a la ficha del paciente."""
         self.get_object()  # valida que el paciente sea del tenant (404 si no)
         events = AuditEvent.objects.filter(
             tenant_id=self.get_tenant_id(), action=AuditEvent.Action.CLINICAL_READ,
@@ -82,8 +76,7 @@ class PatientViewSet(TenantScopedModelViewSet):
 
     @action(detail=True, methods=["get"])
     def export(self, request, pk=None):
-        """HU-24 (ARCO): exporta todos los datos del paciente. Solo ADMIN. Auditado."""
-        self._require_admin(request)
+        """HU-24 (ARCO): exporta todos los datos del paciente. Auditado."""
         p = self.get_object()
         data = {
             "patient": model_to_dict(p, exclude=["tenant"]),
@@ -99,7 +92,6 @@ class PatientViewSet(TenantScopedModelViewSet):
     @action(detail=True, methods=["post"])
     def anonymize(self, request, pk=None):
         """HU-24 (ARCO): anonimiza los datos identificatorios ante un pedido de supresión."""
-        self._require_admin(request)
         p = self.get_object()
         p.first_name, p.last_name = "Paciente", "Anonimizado"
         p.dni = p.email = p.phone = p.address = ""

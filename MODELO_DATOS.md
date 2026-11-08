@@ -27,7 +27,6 @@ erDiagram
     TENANT ||--o{ USER : "tiene"
     TENANT ||--o{ PATIENT : "posee"
     TENANT ||--o{ ANAMNESIS_TEMPLATE : "define"
-    TENANT ||--o{ PLAN_TEMPLATE : "define"
 
     USER ||--o{ EMAIL_VERIFICATION_TOKEN : "genera"
     USER ||--o{ PASSWORD_RESET_TOKEN : "genera"
@@ -41,6 +40,7 @@ erDiagram
 
     NUTRITION_PLAN ||--o{ PLAN_GENERATION : "se genera con IA"
     USER ||--o{ NUTRITION_PLAN : "crea/aprueba"
+    USER ||--o{ AUDIT_EVENT : "registra"
 
     TENANT {
         int id PK
@@ -55,9 +55,6 @@ erDiagram
         string business_name
         string license_number "matrícula"
         string logo_url "storage externo"
-        string slug "portal público, único"
-        string plan_type "BASIC/PRO/PREMIUM"
-        json feature_flags
     }
     USER {
         int id PK
@@ -65,8 +62,9 @@ erDiagram
         string email UK
         string first_name
         string last_name
-        string role "SUPER_ADMIN/ADMIN/USER"
+        bool email_verified
         bool is_active
+        bool is_staff
     }
     PATIENT {
         int id PK
@@ -152,17 +150,9 @@ erDiagram
         json content "días/comidas"
         int approved_by_id FK "aprobación profesional"
         datetime approved_at
-        int approved_version
         string share_token "revocable"
         bool share_enabled
         int created_by_id FK
-    }
-    PLAN_TEMPLATE {
-        int id PK
-        int tenant_id FK
-        string name
-        text description
-        json content
     }
     PLAN_GENERATION {
         int id PK
@@ -203,6 +193,17 @@ erDiagram
         datetime expires_at
         bool used
     }
+    AUDIT_EVENT {
+        int id PK
+        int tenant_id "opcional"
+        int actor_id FK "User"
+        string action "LOGIN, CLINICAL_READ, PLAN_APPROVED, …"
+        string entity
+        string entity_id
+        json metadata
+        string ip_address
+        datetime created_at
+    }
 ```
 
 ## Notas de diseño relevantes para la tesis
@@ -213,7 +214,7 @@ erDiagram
    sensibles (Ley 25.326) → cifrado en reposo y auditoría de acceso (Sprint 6).
 3. **Máquina de estados del plan (RF-IA-06):** `NutritionPlan.status` gobierna la
    visibilidad; el paciente solo ve `APROBADO`/`COMPARTIDO`. La aprobación queda firmada
-   (`approved_by`, `approved_at`, `approved_version`).
+   (`approved_by`, `approved_at`).
 4. **Trazabilidad y seudonimización de IA (RF-IA-05/07):** `PlanGeneration.request_payload`
    guarda lo que se envió a la IA, **sin datos identificatorios**; se registra proveedor,
    modelo, versión, tokens y costo.
@@ -227,5 +228,5 @@ erDiagram
 | Entidad | Estado | App |
 |---|---|---|
 | Tenant, User, Patient, Anamnesis(+Template), PatientMetric, Evolution, Visit, AuditEvent, tokens | ✅ Implementadas | tenants, identity, clinical, scheduling, audit |
-| **TenantSettings** | 🟡 Modelo diseñado (Sprint 4) | tenants |
-| **NutritionPlan, PlanTemplate, PlanGeneration, PatientConsent** | 🟡 Modelo diseñado (Sprint 4) | plans |
+| **TenantSettings** | ✅ Implementada | tenants |
+| **NutritionPlan, PlanGeneration, PatientConsent** | ✅ Implementadas | plans |

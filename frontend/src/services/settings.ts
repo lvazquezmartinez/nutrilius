@@ -5,8 +5,6 @@ export interface TenantSettings {
   business_name: string
   license_number: string
   logo_url: string
-  slug: string | null
-  plan_type: string
   booking_token: string
 }
 

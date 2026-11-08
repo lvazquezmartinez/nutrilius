@@ -3,14 +3,13 @@ import pytest
 
 from apps.audit.models import AuditEvent
 from apps.clinical.models import Patient
-from apps.identity.models import Role
 
 pytestmark = pytest.mark.django_db
 
 
 def test_crear_paciente_setea_tenant_creador_y_audita(auth_client, make_tenant):
     t = make_tenant("T1")
-    client, admin = auth_client(email="a@t1.local", role=Role.ADMIN, tenant=t)
+    client, admin = auth_client(email="a@t1.local", tenant=t)
     r = client.post("/api/patients/", {"first_name": "Ana", "last_name": "Gómez", "dni": "123"}, format="json")
     assert r.status_code == 201
     p = Patient.all_objects.get(dni="123")

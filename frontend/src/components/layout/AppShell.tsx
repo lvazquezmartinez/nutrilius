@@ -3,13 +3,10 @@ import { clsx } from 'clsx'
 import { useAuthStore } from '@/store/authStore'
 import { Icons } from '@/components/ui/Icons'
 
-type Role = 'SUPER_ADMIN' | 'ADMIN' | 'USER'
-
 interface NavItem {
   href: string
   icon: React.ComponentType<{ className?: string }>
   label: string
-  roles?: Role[]
 }
 
 const NAV_PRIMARY: NavItem[] = [
@@ -22,7 +19,6 @@ const NAV_PRIMARY: NavItem[] = [
 
 const NAV_SECONDARY: NavItem[] = [
   { href: '/configuracion', icon: Icons.Settings, label: 'Configuración' },
-  { href: '/admin',         icon: Icons.Shield,   label: 'Administración', roles: ['SUPER_ADMIN', 'ADMIN'] },
 ]
 
 function LogoMark() {
@@ -36,9 +32,7 @@ function LogoMark() {
   )
 }
 
-function SidebarNavItem({ item, userRole }: { item: NavItem; userRole?: Role }) {
-  if (item.roles && userRole && !item.roles.includes(userRole)) return null
-
+function SidebarNavItem({ item }: { item: NavItem }) {
   return (
     <NavLink
       to={item.href}
@@ -91,7 +85,7 @@ function Sidebar() {
       <nav className="flex-1 overflow-y-auto pt-3 pb-2">
         <div className="space-y-0.5">
           {NAV_PRIMARY.map(item => (
-            <SidebarNavItem key={item.href} item={item} userRole={user?.role} />
+            <SidebarNavItem key={item.href} item={item} />
           ))}
         </div>
 
@@ -99,7 +93,7 @@ function Sidebar() {
 
         <div className="space-y-0.5">
           {NAV_SECONDARY.map(item => (
-            <SidebarNavItem key={item.href} item={item} userRole={user?.role} />
+            <SidebarNavItem key={item.href} item={item} />
           ))}
         </div>
       </nav>

@@ -16,8 +16,8 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.utils import timezone
 
-from apps.tenants.models import Tenant, TenantSettings, PlanType
-from apps.identity.models import User, Role
+from apps.tenants.models import Tenant, TenantSettings
+from apps.identity.models import User
 from apps.clinical.models import Patient, Anamnesis, PatientMetric, Evolution
 from apps.scheduling.models import Visit, VisitStatus
 from apps.plans.models import NutritionPlan, PatientConsent, PlanStatus
@@ -54,11 +54,11 @@ class Command(BaseCommand):
         tenant = Tenant.objects.create(name=DEMO_TENANT)
         TenantSettings.objects.create(
             tenant=tenant, nutritionist_name="Dra. Laura Demo", business_name=DEMO_TENANT,
-            license_number="MP 12345", slug="demo", plan_type=PlanType.PRO,
+            license_number="MP 12345",
         )
         user = User.objects.create_user(
             email=email, password=password, first_name="Laura", last_name="Demo",
-            role=Role.ADMIN, tenant=tenant, email_verified=True, is_active=True,
+            tenant=tenant, email_verified=True, is_active=True,
         )
 
         today = timezone.localdate()

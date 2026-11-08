@@ -74,8 +74,8 @@ def test_gate_de_aprobacion(setup, make_user):
 
     assert plan.status == PlanStatus.APROBADO
     assert plan.visible_to_patient is True
-    assert plan.approved_by_id == user.id
-    assert plan.approved_version == 1                    # firma de versión
+    assert plan.approved_by_id == user.id                # firma de quién aprobó
+    assert plan.approved_at is not None                  # firma de cuándo
 
 
 def test_transicion_invalida_falla(setup):

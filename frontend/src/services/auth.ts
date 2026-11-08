@@ -1,13 +1,10 @@
 import { api } from '@/lib/api'
 
-export type Role = 'SUPER_ADMIN' | 'ADMIN' | 'USER'
-
 export interface AuthUser {
   id: number
   email: string
   first_name: string
   last_name: string
-  role: Role
 }
 
 export interface TokenResponse {

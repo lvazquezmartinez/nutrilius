@@ -60,7 +60,6 @@ export default function App() {
             <Route path="/agenda"            element={<AgendaPage />} />
             <Route path="/planes"            element={<ComingSoon title="Planes con IA" description="Generación de planes alimentarios asistida por IA, con tu revisión y aprobación." />} />
             <Route path="/configuracion"     element={<ConfigPage />} />
-            <Route path="/admin"             element={<ComingSoon title="Administración" description="Consola de administración de la plataforma." />} />
           </Route>
 
           {/* Landing pública */}

@@ -1,6 +1,6 @@
 from django.conf import settings
 from django.db import transaction
-from rest_framework import generics, status
+from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -12,15 +12,13 @@ from apps.audit.services import log_event
 from apps.tenants.models import Tenant
 
 from .google import GoogleAuthError, verify_google_token
-from .models import EmailVerificationToken, PasswordResetToken, Role, User
-from .permissions import IsTenantAdmin
+from .models import EmailVerificationToken, PasswordResetToken, User
 from .serializers import (
     EmailTokenObtainPairSerializer,
     GoogleRegisterSerializer,
     RegisterSerializer,
     RequestResetSerializer,
     ResetSerializer,
-    UserCreateSerializer,
     UserSerializer,
 )
 from .tasks import send_password_reset_email, send_verification_email
@@ -66,7 +64,6 @@ class RegisterView(APIView):
             password=data["password"],
             first_name=data.get("first_name", ""),
             last_name=data.get("last_name", ""),
-            role=Role.ADMIN,
             tenant=tenant,
             email_verified=False,
         )
@@ -175,7 +172,6 @@ class GoogleRegisterView(APIView):
             password=None,  # sin contraseña: entra por Google (o setea una vía reset)
             first_name=serializer.validated_data.get("first_name") or data["first_name"],
             last_name=serializer.validated_data.get("last_name") or data["last_name"],
-            role=Role.ADMIN,
             tenant=tenant,
             email_verified=True,  # Google ya verificó el email
         )
@@ -227,45 +223,3 @@ class ResetView(APIView):
         token.mark_used()
         log_event(AuditEvent.Action.PASSWORD_RESET, actor=user, request=request)
         return Response({"detail": "Contraseña actualizada."})
-
-
-class UserListCreateView(generics.ListCreateAPIView):
-    """Gestión de usuarios internos del tenant (RF-05). Solo ADMIN."""
-
-    permission_classes = [IsTenantAdmin]
-
-    def get_queryset(self):
-        return User.objects.filter(tenant_id=self.request.user.tenant_id).order_by("email")
-
-    def get_serializer_class(self):
-        return UserCreateSerializer if self.request.method == "POST" else UserSerializer
-
-    def perform_create(self, serializer):
-        user = serializer.save(
-            tenant_id=self.request.user.tenant_id,
-            email_verified=True,  # alta interna por el admin
-            is_active=True,
-        )
-        user.set_password(serializer.validated_data["password"])
-        user.save(update_fields=["password"])
-        log_event(AuditEvent.Action.USER_CREATED, actor=self.request.user,
-                  entity="User", entity_id=user.id, request=self.request)
-
-
-class UserToggleView(APIView):
-    """Activar / desactivar un usuario del tenant (RF-05). Solo ADMIN."""
-
-    permission_classes = [IsTenantAdmin]
-
-    def post(self, request, pk):
-        user = User.objects.filter(pk=pk, tenant_id=request.user.tenant_id).first()
-        if user is None:
-            return Response({"detail": "No encontrado."}, status=status.HTTP_404_NOT_FOUND)
-        if user.id == request.user.id:
-            return Response({"detail": "No podés desactivarte a vos mismo."},
-                            status=status.HTTP_400_BAD_REQUEST)
-        user.is_active = not user.is_active
-        user.save(update_fields=["is_active"])
-        log_event(AuditEvent.Action.USER_TOGGLED, actor=request.user, entity="User",
-                  entity_id=user.id, metadata={"is_active": user.is_active}, request=request)
-        return Response(UserSerializer(user).data)

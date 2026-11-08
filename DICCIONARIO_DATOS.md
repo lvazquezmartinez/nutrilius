@@ -37,9 +37,6 @@ Para no repetirlos en cada tabla, todas las entidades incluyen:
 | business_name | 200 | Texto | Nombre comercial |
 | license_number | 100 | Texto | Matrícula profesional |
 | logo_url | 200 | URL | Logo (almacenamiento externo) |
-| slug | 80 | Texto | Identificador público para el portal de reservas |
-| plan_type | 20 | Texto (enum) | Plan comercial: BASIC/PRO/PREMIUM |
-| feature_flags | — | JSON | Módulos habilitados por consultorio |
 
 ## User (usuario del sistema)
 | Campo | Longitud | Tipo | Descripción |
@@ -47,12 +44,21 @@ Para no repetirlos en cada tabla, todas las entidades incluyen:
 | email | 254 | Email | Correo, único; es el identificador de login |
 | first_name | 120 | Texto | Nombre |
 | last_name | 120 | Texto | Apellido |
-| role | 20 | Texto (enum) | Rol: SUPER_ADMIN/ADMIN/USER |
 | tenant_id | — | Entero (FK) | Consultorio al que pertenece |
 | email_verified | — | Booleano | Email confirmado (requisito para login) |
 | is_active | — | Booleano | Usuario activo |
 | is_staff | — | Booleano | Acceso al admin de Django |
 | password | 128 | Texto (hash) | Contraseña cifrada (PBKDF2/Argon2) |
+
+## EmailVerificationToken / PasswordResetToken (tokens de acción)
+Tokens de un solo uso para confirmar el email y restablecer la contraseña (RF-03/04).
+
+| Campo | Longitud | Tipo | Descripción |
+|---|---|---|---|
+| user_id | — | Entero (FK → User) | Usuario dueño del token |
+| token | 64 | Texto | Token único |
+| expires_at | — | Fecha y hora | Vencimiento (48 h email / 2 h reset) |
+| used / used_at | — | Booleano / Fecha y hora | Marca de un solo uso |
 
 ## Patient (paciente)
 | Campo | Longitud | Tipo | Descripción |
@@ -74,8 +80,8 @@ Para no repetirlos en cada tabla, todas las entidades incluyen:
 |---|---|---|---|
 | patient_id | — | Entero (FK, 1-1) | Paciente |
 | occupation | 200 | Texto | Ocupación |
-| reason_for_consultation | — | Texto largo | Motivo de consulta |
-| medications | — | Texto largo | Medicación actual |
+| reason_for_consultation | — | Texto largo 🔒 | Motivo de consulta (cifrado en reposo, HU-22) |
+| medications | — | Texto largo 🔒 | Medicación actual (cifrado en reposo, HU-22) |
 | alcohol_consumption | 120 | Texto | Consumo de alcohol |
 | smoking_status | 120 | Texto | Tabaquismo |
 | digestive_symptoms | — | Texto largo | Síntomas digestivos |
@@ -102,7 +108,7 @@ Para no repetirlos en cada tabla, todas las entidades incluyen:
 | neck_cm | 6,2 | Decimal | Cuello (cm) |
 | hip_cm | 6,2 | Decimal | Cadera (cm) |
 | arm_cm | 6,2 | Decimal | Brazo (cm) |
-| final_comments | — | Texto largo | Comentarios finales |
+| final_comments | — | Texto largo 🔒 | Comentarios finales (cifrado en reposo, HU-22) |
 | data_json | — | JSON | Datos adicionales según plantilla del consultorio |
 
 ## AnamnesisTemplate (plantilla de anamnesis por consultorio)
@@ -136,7 +142,7 @@ Para no repetirlos en cada tabla, todas las entidades incluyen:
 | muscle_mass_pct | 5,2 | Decimal | % de masa muscular |
 | blood_pressure_systolic | — | Entero | Presión arterial sistólica (mmHg) |
 | blood_pressure_diastolic | — | Entero | Presión arterial diastólica (mmHg) |
-| clinical_notes | — | Texto largo | Notas clínicas |
+| clinical_notes | — | Texto largo 🔒 | Notas clínicas (cifrado en reposo, HU-22) |
 | dietary_assessment | — | Texto largo | Evaluación dietética |
 | next_visit_objectives | — | Texto largo | Objetivos para la próxima consulta |
 
@@ -184,16 +190,8 @@ Para no repetirlos en cada tabla, todas las entidades incluyen:
 | professional_notes | — | Texto largo | Notas del profesional |
 | approved_by_id | — | Entero (FK → User) | Profesional que aprobó |
 | approved_at | — | Fecha y hora | Fecha de aprobación |
-| approved_version | — | Entero | Versión aprobada |
 | share_token | 64 | Texto | Token de compartición pública |
 | share_enabled | — | Booleano | Compartición habilitada |
-
-### PlanTemplate (plantilla de plan)
-| Campo | Longitud | Tipo | Descripción |
-|---|---|---|---|
-| name | 200 | Texto | Nombre de la plantilla |
-| description | — | Texto largo | Descripción |
-| content | — | JSON | Contenido base del plan |
 
 ### PlanGeneration (traza de generación con IA)
 | Campo | Longitud | Tipo | Descripción |

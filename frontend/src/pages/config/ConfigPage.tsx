@@ -1,21 +1,17 @@
 import { useEffect, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Button } from '@/components/ui/Button'
-import { useAuthStore } from '@/store/authStore'
 import { settingsService, type TenantSettings } from '@/services/settings'
 
 const FIELDS: { key: keyof TenantSettings; label: string; placeholder: string }[] = [
   { key: 'business_name', label: 'Nombre comercial', placeholder: 'Nombre del consultorio' },
   { key: 'nutritionist_name', label: 'Profesional', placeholder: 'Nombre del nutricionista' },
   { key: 'license_number', label: 'Matrícula', placeholder: 'MP 12345' },
-  { key: 'slug', label: 'Identificador público (slug)', placeholder: 'mi-consultorio' },
   { key: 'logo_url', label: 'URL del logo', placeholder: 'https://…' },
 ]
 
 export function ConfigPage() {
   const qc = useQueryClient()
-  const user = useAuthStore(s => s.user)
-  const isAdmin = user?.role === 'ADMIN'
   const [form, setForm] = useState<Partial<TenantSettings>>({})
   const [saved, setSaved] = useState(false)
 
@@ -26,9 +22,7 @@ export function ConfigPage() {
     mutationFn: () => settingsService.update(form),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['settings'] }); setSaved(true); setTimeout(() => setSaved(false), 2500) },
   })
-  const error = (saveMut.error as any)?.response?.status === 403
-    ? 'Solo el administrador del consultorio puede editar la configuración.'
-    : (saveMut.error as any) ? 'No se pudo guardar.' : null
+  const error = (saveMut.error as any) ? 'No se pudo guardar.' : null
 
   if (isLoading) return <div className="py-16 text-center text-sm text-text-muted">Cargando…</div>
 
@@ -44,7 +38,6 @@ export function ConfigPage() {
             <input
               className="h-9 rounded border border-border-base bg-surface text-sm px-3 disabled:bg-subtle
                          focus:outline-none focus:ring-2 focus:ring-primary-700"
-              disabled={!isAdmin}
               placeholder={f.placeholder}
               value={(form[f.key] as string) ?? ''}
               onChange={e => setForm(s => ({ ...s, [f.key]: e.target.value }))}
@@ -55,13 +48,9 @@ export function ConfigPage() {
         {error && <p className="text-sm text-danger">{error}</p>}
         {saved && <p className="text-sm" style={{ color: '#2f7d5c' }}>Cambios guardados.</p>}
 
-        {isAdmin ? (
-          <div className="flex justify-end pt-1">
-            <Button loading={saveMut.isPending} onClick={() => saveMut.mutate()}>Guardar cambios</Button>
-          </div>
-        ) : (
-          <p className="text-xs text-text-muted pt-1">Solo el administrador puede editar esta configuración.</p>
-        )}
+        <div className="flex justify-end pt-1">
+          <Button loading={saveMut.isPending} onClick={() => saveMut.mutate()}>Guardar cambios</Button>
+        </div>
       </div>
 
       {data?.booking_token && (
