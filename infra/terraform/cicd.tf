@@ -27,6 +27,32 @@ resource "google_service_account_iam_member" "cicd_act_as_run" {
   member             = "serviceAccount:${google_service_account.cicd.email}"
 }
 
+# ─── Frontend (SPA estático en GCS + CDN) ───
+# El CI publica el build al bucket del frontend...
+resource "google_storage_bucket_iam_member" "cicd_frontend_writer" {
+  bucket = google_storage_bucket.frontend.name
+  role   = "roles/storage.objectAdmin"
+  member = "serviceAccount:${google_service_account.cicd.email}"
+}
+
+# ...y necesita invalidar la caché del CDN. Rol a medida (mínimo privilegio):
+# solo la acción de invalidar, no administración del load balancer.
+resource "google_project_iam_custom_role" "cdn_invalidator" {
+  role_id     = "cdnCacheInvalidator"
+  title       = "CDN Cache Invalidator"
+  description = "Invalidar la caché del CDN (url-maps). Usado por el CI del frontend."
+  permissions = [
+    "compute.urlMaps.get",
+    "compute.urlMaps.invalidateCache",
+  ]
+}
+
+resource "google_project_iam_member" "cicd_cdn_invalidate" {
+  project = var.project_id
+  role    = google_project_iam_custom_role.cdn_invalidator.id
+  member  = "serviceAccount:${google_service_account.cicd.email}"
+}
+
 resource "google_iam_workload_identity_pool" "github" {
   workload_identity_pool_id = "${var.app_name}-gh-pool"
   display_name              = "GitHub Actions"

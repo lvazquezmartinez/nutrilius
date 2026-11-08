@@ -13,34 +13,43 @@ jobs:
   changes:
     runs-on: ubuntu-latest
     outputs:
-      run: ${{ steps.d.outputs.run }}
+      backend: ${{ steps.d.outputs.backend }}
+      frontend: ${{ steps.d.outputs.frontend }}
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - id: d
-        name: ¿Correr el pipeline?
+        name: ¿Qué desplegar?
         run: |
-          # Los tags (releases) siempre corren.
+          # Los tags (releases) siempre despliegan todo.
           if [ "${{ github.ref_type }}" = "tag" ]; then
-            echo "run=true" >> "$GITHUB_OUTPUT"; exit 0
+            echo "backend=true"  >> "$GITHUB_OUTPUT"
+            echo "frontend=true" >> "$GITHUB_OUTPUT"; exit 0
           fi
           BEFORE="${{ github.event.before }}"
-          # Primer push / evento sin base conocida → correr por las dudas.
+          # Primer push / evento sin base conocida → correr todo por las dudas.
           if [ -z "$BEFORE" ] || [ "$BEFORE" = "0000000000000000000000000000000000000000" ]; then
-            echo "run=true" >> "$GITHUB_OUTPUT"; exit 0
+            echo "backend=true"  >> "$GITHUB_OUTPUT"
+            echo "frontend=true" >> "$GITHUB_OUTPUT"; exit 0
           fi
-          # Push a rama: solo si tocó backend/ o el propio workflow.
-          if git diff --name-only "$BEFORE" "${{ github.sha }}" | grep -qE '^(backend/|\.github/workflows/ci-cd\.yml)'; then
-            echo "run=true" >> "$GITHUB_OUTPUT"
+          DIFF="$(git diff --name-only "$BEFORE" "${{ github.sha }}")"
+          # El propio workflow afecta a ambos despliegues.
+          if echo "$DIFF" | grep -qE '^(backend/|\.github/workflows/ci-cd\.yml)'; then
+            echo "backend=true"  >> "$GITHUB_OUTPUT"
           else
-            echo "run=false" >> "$GITHUB_OUTPUT"
+            echo "backend=false" >> "$GITHUB_OUTPUT"
+          fi
+          if echo "$DIFF" | grep -qE '^(frontend/|\.github/workflows/ci-cd\.yml)'; then
+            echo "frontend=true"  >> "$GITHUB_OUTPUT"
+          else
+            echo "frontend=false" >> "$GITHUB_OUTPUT"
           fi
 
   # ─── Validaciones + tests (runner gratis de GitHub) ──────
   test:
     needs: changes
-    if: needs.changes.outputs.run == 'true'
+    if: needs.changes.outputs.backend == 'true'
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -95,7 +104,7 @@ jobs:
   # Corre en push a main (imagen :sha) y en tags v*.*.* (imagen :version + :latest).
   build-deploy:
     needs: [changes, test]
-    if: needs.changes.outputs.run == 'true' && (github.ref == 'refs/heads/main' || github.ref_type == 'tag')
+    if: needs.changes.outputs.backend == 'true' && (github.ref == 'refs/heads/main' || github.ref_type == 'tag')
     runs-on: ubuntu-latest
     environment: main # las Variables (GCP_*, WIF_PROVIDER, ...) viven en este environment
 
@@ -148,3 +157,48 @@ jobs:
         run: |
           gcloud run deploy ${{ vars.RUN_SERVICE }} \
             --image "$IMAGE" --region ${{ vars.GCP_REGION }} --quiet
+
+  # ─── Build del frontend (Vite) + publicación en GCS + invalidación de CDN ─
+  # Corre en push a main (si cambió frontend/) y en tags v*.*.*.
+  deploy-frontend:
+    needs: changes
+    if: needs.changes.outputs.frontend == 'true' && (github.ref == 'refs/heads/main' || github.ref_type == 'tag')
+    runs-on: ubuntu-latest
+    environment: main # mismas Variables (GCP_*, WIF_PROVIDER, FRONTEND_BUCKET, URLMAP)
+    defaults:
+      run:
+        working-directory: frontend
+
+    permissions:
+      contents: read
+      id-token: write # Workload Identity Federation
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Build de la SPA
+        run: |
+          npm ci
+          npm run build
+
+      - id: auth
+        name: Autenticación a GCP (sin llaves)
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.WIF_PROVIDER }}
+          service_account: ${{ vars.CICD_SERVICE_ACCOUNT }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Publicar en el bucket + invalidar CDN
+        run: |
+          gcloud storage rsync dist "gs://${{ vars.FRONTEND_BUCKET }}" \
+            --recursive --delete-unmatched-destination-objects
+          gcloud compute url-maps invalidate-cdn-cache ${{ vars.URLMAP }} \
+            --path="/*" --async
