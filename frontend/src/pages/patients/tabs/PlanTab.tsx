@@ -384,7 +384,7 @@ function StateFlow({ plan, onRegenerate, regenLoading, onSubmit, onApprove, onSh
       </div>
       {plan.status !== 'APROBADO' && plan.status !== 'COMPARTIDO' && (
         <p className="text-xs text-text-muted mt-3">
-          ⚠ El paciente accede al plan solo una vez <b>aprobado</b>. La aprobación queda firmada (profesional, fecha y versión).
+          ⚠ El paciente accede al plan solo una vez <b>aprobado</b>. La aprobación queda firmada (profesional y fecha).
         </p>
       )}
       {plan.status === 'COMPARTIDO' && plan.share_enabled && (

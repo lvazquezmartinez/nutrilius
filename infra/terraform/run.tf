@@ -25,8 +25,8 @@ locals {
 
   # Secretos: nombre de la env var => secret_id en Secret Manager.
   run_secret_env = {
-    POSTGRES_PASSWORD = google_secret_manager_secret.db_password.secret_id
-    DJANGO_SECRET_KEY = "django-secret-key"
+    POSTGRES_PASSWORD      = google_secret_manager_secret.db_password.secret_id
+    DJANGO_SECRET_KEY      = "django-secret-key"
     AI_API_KEY             = "ai-api-key"
     FIELD_ENCRYPTION_KEYS  = "field-encryption-keys"
     SMTP_USER              = "smtp-user"
@@ -159,6 +159,66 @@ resource "google_cloud_run_v2_job" "migrate" {
       containers {
         image   = local.image
         command = ["python", "manage.py", "migrate", "--noinput"]
+
+        dynamic "env" {
+          for_each = local.run_env
+          content {
+            name  = env.key
+            value = env.value
+          }
+        }
+
+        dynamic "env" {
+          for_each = local.run_secret_env
+          content {
+            name = env.key
+            value_source {
+              secret_key_ref {
+                secret  = env.value
+                version = "latest"
+              }
+            }
+          }
+        }
+
+        volume_mounts {
+          name       = "cloudsql"
+          mount_path = "/cloudsql"
+        }
+      }
+
+      volumes {
+        name = "cloudsql"
+        cloud_sql_instance {
+          instances = [google_sql_database_instance.main.connection_name]
+        }
+      }
+    }
+  }
+
+  lifecycle {
+    ignore_changes = [template[0].template[0].containers[0].image]
+  }
+
+  depends_on = [google_project_service.enabled]
+}
+
+# Job para (re)cargar la cuenta de demostración con datos ficticios.
+# Idempotente: borra la demo previa y la recrea. Se ejecuta a mano cuando hace falta
+# refrescar la demo (gcloud run jobs execute <app>-seed --wait).
+resource "google_cloud_run_v2_job" "seed" {
+  name                = "${var.app_name}-seed"
+  location            = var.region
+  deletion_protection = false
+
+  template {
+    template {
+      service_account = google_service_account.run.email
+      max_retries     = 1
+
+      containers {
+        image   = local.image
+        command = ["python", "manage.py", "seed_demo"]
 
         dynamic "env" {
           for_each = local.run_env

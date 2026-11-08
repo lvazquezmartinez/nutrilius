@@ -89,7 +89,7 @@ class FakeProvider:
         for day in DAYS:
             meals = [{
                 "slot": slot,
-                "text": f"Opción {slot} equilibrada (localizada a Argentina)",
+                "text": f"Opción {slot} equilibrada",
                 "kcal": round(kcal * frac),
                 "protein_g": round(macros["protein_g"] * frac, 1),
                 "carbs_g": round(macros["carbs_g"] * frac, 1),

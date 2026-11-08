@@ -10,6 +10,7 @@ estado (BORRADOR_IA, EN_REVISION, APROBADO, COMPARTIDO).
 """
 import datetime
 import random
+import unicodedata
 
 from django.conf import settings
 from django.core.management.base import BaseCommand
@@ -29,6 +30,11 @@ FIRST = ["María", "Juan", "Sofía", "Lucas", "Valentina", "Mateo", "Camila", "B
 LAST = ["González", "Rodríguez", "Fernández", "López", "Martínez", "Pérez", "Gómez",
         "Díaz", "Romero", "Sosa", "Torres", "Ruiz", "Ramírez", "Flores"]
 GOALS = ["DESCENSO", "MANTENIMIENTO", "AUMENTO"]
+
+
+def _ascii(s: str) -> str:
+    """Normaliza a ASCII sin acentos (los emails no pueden llevar tildes)."""
+    return unicodedata.normalize("NFKD", s).encode("ascii", "ignore").decode("ascii")
 ALLERGIES = ["", "", "Maní", "Frutos secos", ""]
 RESTRICTIONS = ["", "Intolerancia a la lactosa", "", "Vegetariano/a", ""]
 
@@ -72,7 +78,8 @@ class Command(BaseCommand):
                 tenant=tenant, created_by=user, first_name=fn, last_name=ln,
                 dni=str(45_000_001 + i), sex=sex,
                 birth_date=datetime.date(today.year - age, ((i % 12) + 1), ((i % 27) + 1)),
-                phone=f"+54 351 555 {1000 + i:04d}", email=f"{fn.lower()}.{ln.lower()}@example.com",
+                phone=f"+54 351 555 {1000 + i:04d}",
+                email=f"{_ascii(fn).lower()}.{_ascii(ln).lower()}@example.com",
                 address=f"Calle Ficticia {100 + i}, Córdoba", is_new=(i >= n - 2),
                 notes="Paciente de demostración (datos ficticios).",
             )
