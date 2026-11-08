@@ -28,10 +28,18 @@ resource "google_service_account_iam_member" "cicd_act_as_run" {
 }
 
 # ─── Frontend (SPA estático en GCS + CDN) ───
-# El CI publica el build al bucket del frontend...
+# El CI publica el build al bucket del frontend (escritura/borrado de objetos)...
 resource "google_storage_bucket_iam_member" "cicd_frontend_writer" {
   bucket = google_storage_bucket.frontend.name
   role   = "roles/storage.objectAdmin"
+  member = "serviceAccount:${google_service_account.cicd.email}"
+}
+
+# ...y `gcloud storage rsync` además necesita leer el bucket (storage.buckets.get)
+# y listar objetos, que objectAdmin no cubre.
+resource "google_storage_bucket_iam_member" "cicd_frontend_bucket_reader" {
+  bucket = google_storage_bucket.frontend.name
+  role   = "roles/storage.legacyBucketReader"
   member = "serviceAccount:${google_service_account.cicd.email}"
 }
 
