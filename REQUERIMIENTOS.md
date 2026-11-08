@@ -16,12 +16,13 @@ Convención de origen:
 ## 1. Alcance
 
 Sistema SaaS **multi-tenant** para profesionales de nutrición: gestión de pacientes,
-registro clínico (anamnesis, evoluciones, métricas), agenda y turnos, pagos y obras
-sociales, comunicación, y **asistencia de IA supervisada** para planes alimentarios.
-Cada tenant (consultorio) opera aislado.
+registro clínico (anamnesis, evoluciones, métricas), agenda y turnos, comunicación, y
+**asistencia de IA supervisada** para planes alimentarios. Cada tenant (consultorio)
+opera aislado.
 
-Roles: `SUPER_ADMIN`, `ADMIN` (nutricionista titular), `USER` (profesional/staff),
-más paciente y visitante público como actores externos.
+Cada consultorio tiene **un único usuario**, que es su administrador. El paciente y el
+visitante público son actores externos (no tienen cuenta). No hay roles ni super admin
+de plataforma en el prototipo.
 
 ---
 
@@ -34,8 +35,10 @@ más paciente y visitante público como actores externos.
 | RF-02 | Login con email/contraseña y emisión de JWT + refresh. | H |
 | RF-03 | Confirmación de email con token y expiración; sin confirmar no hay login. | H |
 | RF-04 | Recuperación de contraseña (solicitud + token temporal + reset). | H |
-| RF-05 | Gestión de usuarios internos del tenant: crear, listar, activar/desactivar, resetear/enviar reset de contraseña. | H |
-| RF-06 | Autorización por rol `SUPER_ADMIN` / `ADMIN` / `USER`. | H |
+| RF-05 | Ingreso con Google (verificación del token de identidad; si faltan datos, se completan en el primer ingreso). | H |
+
+> El registro crea el consultorio junto con su **único usuario administrador**. No hay
+> gestión de usuarios internos, roles ni super admin de plataforma en el prototipo.
 
 ### 2.2 Pacientes
 | ID | Requerimiento | Origen |
@@ -76,7 +79,6 @@ más paciente y visitante público como actores externos.
 |---|---|---|
 | RF-20 | Plan alimentario por paciente: obtener, editar manualmente, guardar. | H |
 | RF-21 | Generación asistida por IA del contenido inicial (ver §3). | H → reforzado en N |
-| RF-22 | Plantillas de plan reutilizables por tenant: crear, listar, editar, borrar. | H |
 | RF-23 | Exportación del plan a PDF con branding del tenant (logo, nombre, matrícula). | H |
 | RF-24 | Compartir el plan por **link público con token**, revocable (habilitar/deshabilitar). | H |
 | RF-25 | Acceso público al PDF del plan por token (`/public/plan/{token}/pdf`), sin login. | H |
@@ -84,22 +86,13 @@ más paciente y visitante público como actores externos.
 ### 2.7 Portal público y self-scheduling
 | ID | Requerimiento | Origen |
 |---|---|---|
-| RF-26 | Página pública de reserva por `slug` del consultorio: ver info y disponibilidad. | H |
+| RF-26 | Página pública de reserva por **enlace con identificador cifrado del consultorio** (token firmado, no deducible): ver disponibilidad. | H |
 | RF-27 | Reservar turno desde el portal público sin login; si el contacto no existe, se crea paciente marcado como nuevo. | H |
 
 ### 2.8 Configuración del tenant
 | ID | Requerimiento | Origen |
 |---|---|---|
 | RF-28 | Configurar datos del consultorio: nombre del nutricionista, nombre comercial, matrícula, logo. | H |
-| RF-29 | Definir `slug` público único para reservas. | H |
-| RF-30 | Definir plan comercial (`plan_type`: `BASIC`/`PRO`/`PREMIUM`) que habilita módulos. | H |
-
-### 2.9 Super Admin
-| ID | Requerimiento | Origen |
-|---|---|---|
-| RF-31 | Listar tenants y ver analíticas de uso. | H |
-| RF-32 | Activar/desactivar tenant (con baja lógica y fecha). | H |
-| RF-33 | Cambiar plan comercial de un tenant y resetear contraseña de su admin. | H |
 
 ---
 
@@ -118,7 +111,6 @@ más paciente y visitante público como actores externos.
 | RF-IA-05 | **Seudonimización:** nunca enviar al proveedor de IA datos identificatorios (nombre, DNI, contacto); solo edad/sexo/patologías/objetivos/parámetros. | N |
 | RF-IA-06 | **Aprobación profesional obligatoria:** máquina de estados `BORRADOR_IA → EN_REVISION → APROBADO → COMPARTIDO`; el paciente solo accede a `APROBADO`/`COMPARTIDO`. Regla forzada en backend. | N |
 | RF-IA-07 | **Trazabilidad:** guardar prompt, proveedor, modelo, versión, timestamp, usuario y costo estimado por generación. | N |
-| RF-IA-08 | Regenerar solo un día o comida; comparar versión IA vs versión editada. | N |
 | RF-IA-09 | **Configurable:** proveedor/modelo de IA por configuración (OpenAI/OpenRouter), con fallback; sin modelos hardcodeados. | N |
 | RF-IA-10 | Requerir consentimiento del paciente para el uso de IA antes de generar. | N |
 
@@ -149,7 +141,6 @@ Detalle del caso de uso y flujos en `CASOS_DE_USO_Y_FLUJOS.md` (CU-12 y §5.3).
 | RNF-12 | Migraciones versionadas (migraciones de Django) en lugar de `init.sql`. | N |
 | RNF-13 | Observabilidad: logs estructurados, correlación por tenant, métricas de uso. | N |
 | RNF-14 | Despliegue en contenedores sobre GCP Compute Engine + Terraform (ver `INFRAESTRUCTURA.md`). | N |
-| RNF-15 | Feature flags por tenant en lugar de acoplar la lógica a un enum de plan fijo. | N |
 | RNF-16 | Localización a Argentina en contenido de planes y formatos. | H |
 | RNF-17 | Estrategia de backup y restore de base de datos y archivos. | N |
 

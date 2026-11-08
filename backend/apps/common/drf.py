@@ -4,7 +4,7 @@ Base DRF para recursos con scope por tenant (RNF-01 / DS-01).
 `TenantScopedModelViewSet` filtra SIEMPRE por el tenant del usuario autenticado de
 forma explícita (no depende solo del context-var), setea el tenant al crear y, si el
 modelo tiene `created_by`, lo completa con el usuario. Si el usuario no tiene tenant
-(p. ej. SUPER_ADMIN), no ve nada por estos endpoints.
+asignado, no ve nada por estos endpoints.
 """
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated

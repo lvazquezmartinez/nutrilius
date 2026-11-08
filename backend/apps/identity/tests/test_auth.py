@@ -5,7 +5,6 @@ from apps.audit.models import AuditEvent
 from apps.identity.models import (
     EmailVerificationToken,
     PasswordResetToken,
-    Role,
     User,
 )
 from apps.tenants.models import Tenant
@@ -21,7 +20,6 @@ def test_register_crea_tenant_y_admin_sin_verificar(api):
     }, format="json")
     assert r.status_code == 201
     user = User.objects.get(email="admin@uno.local")
-    assert user.role == Role.ADMIN
     assert user.tenant is not None
     assert user.tenant.name == "Consultorio Uno"
     assert user.email_verified is False

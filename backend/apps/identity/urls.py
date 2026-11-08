@@ -10,8 +10,6 @@ from .views import (
     RegisterView,
     RequestResetView,
     ResetView,
-    UserListCreateView,
-    UserToggleView,
 )
 
 urlpatterns = [
@@ -24,6 +22,4 @@ urlpatterns = [
     path("auth/me", MeView.as_view(), name="me"),
     path("auth/request-reset", RequestResetView.as_view(), name="request-reset"),
     path("auth/reset", ResetView.as_view(), name="reset"),
-    path("users", UserListCreateView.as_view(), name="users"),
-    path("users/<int:pk>/toggle", UserToggleView.as_view(), name="user-toggle"),
 ]

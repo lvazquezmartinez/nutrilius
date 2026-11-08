@@ -2,7 +2,7 @@ from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
-from .models import Role, User
+from .models import User
 
 
 class RegisterSerializer(serializers.Serializer):
@@ -23,29 +23,9 @@ class RegisterSerializer(serializers.Serializer):
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ["id", "email", "first_name", "last_name", "role",
+        fields = ["id", "email", "first_name", "last_name",
                   "is_active", "email_verified", "created_at"]
-        read_only_fields = ["id", "role", "is_active", "email_verified", "created_at"]
-
-
-class UserCreateSerializer(serializers.ModelSerializer):
-    """Alta de usuario interno por el ADMIN (RF-05)."""
-
-    password = serializers.CharField(write_only=True, validators=[validate_password])
-
-    class Meta:
-        model = User
-        fields = ["id", "email", "first_name", "last_name", "role", "password"]
-
-    def validate_email(self, value):
-        if User.objects.filter(email__iexact=value).exists():
-            raise serializers.ValidationError("Ya existe una cuenta con ese email.")
-        return value.lower()
-
-    def validate_role(self, value):
-        if value == Role.SUPER_ADMIN:
-            raise serializers.ValidationError("No se puede crear un super admin desde acá.")
-        return value
+        read_only_fields = ["id", "is_active", "email_verified", "created_at"]
 
 
 class GoogleRegisterSerializer(serializers.Serializer):

@@ -1,7 +1,7 @@
 """Serializers del módulo de planes + IA supervisada."""
 from rest_framework import serializers
 
-from .models import NutritionPlan, PlanGeneration, PlanTemplate, PatientConsent
+from .models import NutritionPlan, PlanGeneration, PatientConsent
 
 
 class PlanGenerationSerializer(serializers.ModelSerializer):
@@ -27,7 +27,7 @@ class NutritionPlanSerializer(serializers.ModelSerializer):
         exclude = ["tenant"]
         read_only_fields = [
             "status", "target_kcal", "target_protein_g", "target_carbs_g", "target_fat_g",
-            "hard_constraints", "approved_by", "approved_at", "approved_version",
+            "hard_constraints", "approved_by", "approved_at",
             "share_token", "share_enabled", "created_by", "created_at", "updated_at",
         ]
 
@@ -43,10 +43,3 @@ class PatientConsentSerializer(serializers.ModelSerializer):
         model = PatientConsent
         exclude = ["tenant"]
         read_only_fields = ["granted_at", "revoked_at", "recorded_by", "created_at", "updated_at"]
-
-
-class PlanTemplateSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = PlanTemplate
-        exclude = ["tenant"]
-        read_only_fields = ["created_by", "created_at", "updated_at"]

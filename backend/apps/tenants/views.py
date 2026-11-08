@@ -13,7 +13,7 @@ from .serializers import TenantSettingsSerializer
 
 
 class TenantSettingsView(RetrieveUpdateAPIView):
-    """GET para cualquier usuario del consultorio; edición solo para el ADMIN. Auditado."""
+    """GET y edición para el usuario del consultorio. Auditado."""
     serializer_class = TenantSettingsSerializer
 
     def get_permissions(self):

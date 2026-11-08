@@ -11,8 +11,8 @@ class TenantSettingsSerializer(serializers.ModelSerializer):
     class Meta:
         model = TenantSettings
         fields = ["nutritionist_name", "business_name", "license_number",
-                  "logo_url", "slug", "plan_type", "booking_token"]
-        read_only_fields = ["plan_type", "booking_token"]  # plan y token no se editan
+                  "logo_url", "booking_token"]
+        read_only_fields = ["booking_token"]  # el token no se edita
 
     def get_booking_token(self, obj):
         """Token firmado del consultorio para el enlace público de reservas (HU-18)."""

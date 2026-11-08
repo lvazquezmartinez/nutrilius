@@ -3,7 +3,7 @@ import pytest
 from rest_framework.test import APIClient
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from apps.identity.models import Role, User
+from apps.identity.models import User
 from apps.tenants.models import Tenant
 
 
@@ -21,10 +21,10 @@ def make_tenant(db):
 
 @pytest.fixture
 def make_user(db):
-    def _make(email="user@test.local", password="SuperSecret123", role=Role.ADMIN,
+    def _make(email="user@test.local", password="SuperSecret123",
               tenant=None, email_verified=True, is_active=True):
         return User.objects.create_user(
-            email=email, password=password, role=role, tenant=tenant,
+            email=email, password=password, tenant=tenant,
             email_verified=email_verified, is_active=is_active,
         )
     return _make

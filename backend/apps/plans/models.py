@@ -65,13 +65,12 @@ class NutritionPlan(TenantOwnedModel):
     content = models.JSONField(default=dict, blank=True)
     professional_notes = models.TextField(blank=True)
 
-    # Aprobación profesional obligatoria: firma quién/cuándo/versión (RF-IA-06).
+    # Aprobación profesional obligatoria: firma quién y cuándo (RF-IA-06).
     approved_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
         related_name="+",
     )
     approved_at = models.DateTimeField(null=True, blank=True)
-    approved_version = models.PositiveIntegerField(null=True, blank=True)
 
     # Compartición por link/token revocable + PDF público (RF-24, RF-25).
     share_token = models.CharField(max_length=64, blank=True, db_index=True)
@@ -100,16 +99,14 @@ class NutritionPlan(TenantOwnedModel):
         self.save(update_fields=["status", "updated_at"])
 
     def approve(self, user):
-        """Aprobación profesional obligatoria: firma quién, cuándo y qué versión."""
+        """Aprobación profesional obligatoria: firma quién y cuándo."""
         from django.utils import timezone
         if self.status not in (PlanStatus.BORRADOR_IA, PlanStatus.EN_REVISION):
             raise ValueError(f"No se puede aprobar un plan en estado {self.status}.")
         self.status = PlanStatus.APROBADO
         self.approved_by = user
         self.approved_at = timezone.now()
-        self.approved_version = (self.approved_version or 0) + 1
-        self.save(update_fields=["status", "approved_by", "approved_at",
-                                 "approved_version", "updated_at"])
+        self.save(update_fields=["status", "approved_by", "approved_at", "updated_at"])
 
     def share(self, *, token: str):
         """Compartir requiere estar aprobado; habilita el link con token revocable."""
@@ -123,22 +120,6 @@ class NutritionPlan(TenantOwnedModel):
     def revoke_share(self):
         self.share_enabled = False
         self.save(update_fields=["share_enabled", "updated_at"])
-
-
-class PlanTemplate(TenantOwnedModel):
-    """Plantilla de plan reutilizable por tenant (RF-22)."""
-    name = models.CharField(max_length=200)
-    description = models.TextField(blank=True)
-    content = models.JSONField(default=dict, blank=True)
-    created_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name="+"
-    )
-
-    class Meta:
-        ordering = ["name"]
-
-    def __str__(self):
-        return self.name
 
 
 class PlanGeneration(TenantOwnedModel):

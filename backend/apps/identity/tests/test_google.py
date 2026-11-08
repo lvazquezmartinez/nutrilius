@@ -2,7 +2,7 @@
 import pytest
 
 from apps.identity.google import GoogleAuthError
-from apps.identity.models import Role, User
+from apps.identity.models import User
 
 pytestmark = pytest.mark.django_db
 
@@ -15,7 +15,7 @@ def _fake_verify(data):
 
 def test_google_login_usuario_existente(api, make_user, make_tenant, monkeypatch):
     t = make_tenant("T1")
-    make_user(email="pro@gmail.com", role=Role.ADMIN, tenant=t)
+    make_user(email="pro@gmail.com", tenant=t)
     monkeypatch.setattr("apps.identity.views.verify_google_token",
                         _fake_verify({"email": "pro@gmail.com", "first_name": "Pro", "last_name": "X"}))
     r = api.post("/api/auth/google", {"credential": "tok"}, format="json")
@@ -40,7 +40,6 @@ def test_google_register_crea_consultorio(api, monkeypatch):
                  {"credential": "tok", "business_name": "Consultorio Ana"}, format="json")
     assert r.status_code == 201
     u = User.objects.get(email="duenio@gmail.com")
-    assert u.role == Role.ADMIN
     assert u.email_verified is True                 # Google ya verificó el email
     assert u.tenant.name == "Consultorio Ana"
     assert u.has_usable_password() is False         # entra por Google, sin contraseña

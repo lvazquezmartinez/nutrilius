@@ -97,8 +97,8 @@ export function PlanTab({ patientId }: { patientId: string }) {
             <div>
               <h2 className="text-base font-semibold text-text-primary">{plan.title}</h2>
               <p className="text-xs text-text-muted mt-0.5">
-                {plan.goal ? GOALS.find(g => g.value === plan.goal)?.label : 'Sin objetivo'} ·
-                versión {plan.approved_version ?? '—'}
+                {plan.goal ? GOALS.find(g => g.value === plan.goal)?.label : 'Sin objetivo'}
+                {plan.approved_at && ` · aprobado el ${new Date(plan.approved_at).toLocaleDateString()}`}
               </p>
             </div>
             <StatusBadge status={plan.status} />

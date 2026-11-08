@@ -55,7 +55,6 @@ export interface NutritionPlan {
   professional_notes: string
   approved_by: number | null
   approved_at: string | null
-  approved_version: number | null
   share_token: string
   share_enabled: boolean
   visible_to_patient: boolean
