@@ -152,9 +152,11 @@ class OpenAIProvider:
     def _client(self):
         # Import diferido: solo se necesita cuando hay proveedor real configurado.
         from openai import OpenAI
-        # timeout < al del worker de gunicorn (150s) para fallar limpio en vez de colgar.
+        # La generación del plan semanal produce miles de tokens y puede tardar ~1-2 min.
+        # timeout holgado y sin reintentos (que duplicarían la espera), por debajo del
+        # worker de gunicorn (180s) para fallar limpio en vez de colgar.
         return OpenAI(api_key=self._api_key, base_url=self._base_url,
-                      timeout=60.0, max_retries=1)
+                      timeout=120.0, max_retries=0)
 
     def generate(self, payload: dict) -> dict:
         client = self._client()
