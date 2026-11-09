@@ -61,8 +61,9 @@ docker compose run --rm backend sh -c "pip install -r requirements-dev.txt && py
 
 ## Desplegar
 
-Ver **[INSTRUCTIVO.md](INSTRUCTIVO.md)** (infraestructura con Terraform, pipeline de
-CI/CD y publicación del frontend).
+Infraestructura como código en **`infra/terraform/`** (GCP: Cloud Run, Cloud SQL, Cloud
+Storage + CDN, Secret Manager) y pipeline de **CI/CD** en `.github/workflows/ci-cd.yml`
+(build + deploy de backend y frontend). Ver **[infra/terraform/README.md](infra/terraform/README.md)**.
 
 ## Estructura
 
@@ -73,8 +74,9 @@ frontend/src/*     Páginas, servicios y componentes (React)
 infra/terraform/*  Infraestructura como código (GCP)
 ```
 
-Documentación de diseño: `REQUERIMIENTOS.md`, `MODULOS.md`, `MODELO_DATOS.md`,
-`DICCIONARIO_DATOS.md`, `ARQUITECTURA.md`, `DECISIONES_TECNICAS_Y_SEGURIDAD.md`.
+> La documentación de diseño (requerimientos, módulos, modelo de datos, DER, diccionario
+> de datos, casos de uso y decisiones técnicas) forma parte de la **tesis** y no se
+> versiona en el repositorio.
 
 ## Licencia
 

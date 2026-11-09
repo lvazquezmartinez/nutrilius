@@ -1,7 +1,7 @@
 # Nutrilius — Backend (Django)
 
 Reconstrucción desde cero en `Python 3.12 + Django 5 + DRF`. Un módulo = una Django
-app bajo `apps/` (ver `../MODULOS.md`). Decisiones en `../DECISIONES_TECNICAS_Y_SEGURIDAD.md`.
+app bajo `apps/` (identity, tenants, clinical, scheduling, plans, dashboard, audit, common).
 
 ## Estructura
 
@@ -48,6 +48,7 @@ docker compose run --rm backend sh -c "pip install -r requirements-dev.txt && py
 
 ## Fases
 
-El plan por fases está en `../V1_PLAN.md`. Fase 0: scaffold (proyecto, settings, DB,
-cache, Celery, storage, health checks). Fase 1: identidad + multi-tenant (hecha, con
-tests). Cada módulo detalla su cobertura de tests en `../MODULOS.md`.
+La reconstrucción se hizo por fases: Fase 0: scaffold (proyecto, settings, DB, cache,
+Celery, storage, health checks). Fase 1: identidad + multi-tenant. Luego clinical,
+scheduling, planes + IA supervisada, dashboard y auditoría. Cada módulo trae su suite de
+tests en `apps/<modulo>/tests/`.
