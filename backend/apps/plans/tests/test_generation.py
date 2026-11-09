@@ -78,6 +78,25 @@ def test_gate_de_aprobacion(setup, make_user):
     assert plan.approved_at is not None                  # firma de cuándo
 
 
+def test_no_regenera_sobre_plan_aprobado(setup, make_user):
+    """Un plan aprobado no se puede regenerar: eso pisaría una decisión firmada.
+    Para rehacer, se crea un plan nuevo (el historial del paciente se conserva)."""
+    t, p, plan = setup
+    PatientConsent.objects.create(tenant=t, patient=p, granted=True)
+    user = make_user(tenant=t)
+
+    generation.generate_for_plan(plan, goal="DESCENSO", user=user)
+    plan.refresh_from_db(); plan.approve(user)
+    contenido_aprobado = plan.content
+
+    with pytest.raises(ValueError):
+        generation.generate_for_plan(plan, goal="AUMENTO", user=user)
+
+    plan.refresh_from_db()
+    assert plan.status == PlanStatus.APROBADO             # sigue aprobado
+    assert plan.content == contenido_aprobado             # no se pisó el contenido
+
+
 def test_transicion_invalida_falla(setup):
     _, _, plan = setup
     with pytest.raises(ValueError):

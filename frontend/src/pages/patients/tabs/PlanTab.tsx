@@ -42,6 +42,8 @@ export function PlanTab({ patientId }: { patientId: string }) {
   const qc = useQueryClient()
   const [goal, setGoal] = useState<PlanGoal>('DESCENSO')
   const [activity, setActivity] = useState<ActivityLevel>('MODERATE')
+  // Plan seleccionado del historial; null = "Nuevo plan" (aún sin crear).
+  const [selectedId, setSelectedId] = useState<number | 'new' | null>(null)
 
   const { data: plans = [], isLoading } = useQuery({
     queryKey: ['plans', patientId], queryFn: () => plansService.listByPatient(patientId),
@@ -49,7 +51,13 @@ export function PlanTab({ patientId }: { patientId: string }) {
   const { data: consent } = useQuery({
     queryKey: ['consent', patientId], queryFn: () => consentService.getByPatient(patientId),
   })
-  const plan: NutritionPlan | undefined = plans[0]
+
+  // Resuelve qué plan se está viendo: el elegido, o el más reciente por defecto.
+  const plan: NutritionPlan | undefined = useMemo(() => {
+    if (selectedId === 'new') return undefined
+    if (selectedId != null) return plans.find(p => p.id === selectedId) ?? plans[0]
+    return plans[0]
+  }, [plans, selectedId])
 
   const invalidate = () => {
     qc.invalidateQueries({ queryKey: ['plans', patientId] })
@@ -58,10 +66,14 @@ export function PlanTab({ patientId }: { patientId: string }) {
 
   const genMut = useMutation({
     mutationFn: async () => {
-      const p = plan ?? await plansService.create(patientId, 'Plan alimentario')
-      return plansService.generate(p.id, goal, activity)
+      // Si estamos en "Nuevo plan" (o no hay ninguno) se crea uno; nunca pisa otro.
+      const p = (selectedId === 'new' || !plan)
+        ? await plansService.create(patientId, `Plan ${new Date().toLocaleDateString()}`)
+        : plan
+      const res = await plansService.generate(p.id, goal, activity)
+      return res
     },
-    onSuccess: invalidate,
+    onSuccess: (res) => { setSelectedId(res.plan.id); invalidate() },
   })
   const notesMut = useMutation({ mutationFn: (v: { id: number; notes?: string; content?: PlanContent }) =>
     plansService.update(v.id, { professional_notes: v.notes, content: v.content }), onSuccess: invalidate })
@@ -82,7 +94,13 @@ export function PlanTab({ patientId }: { patientId: string }) {
       <ConsentCard consent={consent} onGrant={() => grantMut.mutate()}
                    onRevoke={(id) => revokeConsentMut.mutate(id)} loading={grantMut.isPending} />
 
-      {/* Sin plan: panel de generación */}
+      {/* Historial de planes del paciente: elegir uno o empezar uno nuevo */}
+      {plans.length > 0 && (
+        <PlanHistoryBar plans={plans} currentId={selectedId === 'new' ? 'new' : (plan?.id ?? null)}
+          onSelect={(id) => setSelectedId(id)} onNew={() => setSelectedId('new')} />
+      )}
+
+      {/* Sin plan (ninguno aún, o en modo "Nuevo plan"): panel de generación */}
       {!plan && (
         <GeneratePanel {...{ goal, setGoal, activity, setActivity }}
           disabled={!consent?.is_active}
@@ -145,6 +163,34 @@ export function PlanTab({ patientId }: { patientId: string }) {
 }
 
 // ── Sub-componentes ───────────────────────────────────────────────────────────
+
+function PlanHistoryBar({ plans, currentId, onSelect, onNew }: {
+  plans: NutritionPlan[]; currentId: number | 'new' | null
+  onSelect: (id: number) => void; onNew: () => void
+}) {
+  const fmt = (p: NutritionPlan) => {
+    const d = new Date(p.created_at ?? Date.now()).toLocaleDateString()
+    return `${p.title || 'Plan'} · ${STATUS_BADGE[p.status].label} · ${d}`
+  }
+  return (
+    <div className="flex items-center justify-between gap-3 bg-surface rounded-lg border border-border-base px-5 py-3 flex-wrap">
+      <div className="flex items-center gap-2 text-sm">
+        <span className="text-xs font-semibold text-text-muted uppercase tracking-wide">Plan</span>
+        <select
+          className="h-9 rounded border border-border-base bg-surface text-sm px-2 max-w-[22rem]"
+          value={currentId === 'new' ? 'new' : (currentId ?? '')}
+          onChange={e => e.target.value === 'new' ? onNew() : onSelect(Number(e.target.value))}>
+          {currentId === 'new' && <option value="new">Nuevo plan (sin guardar)</option>}
+          {plans.map(p => <option key={p.id} value={p.id}>{fmt(p)}</option>)}
+        </select>
+        <span className="text-xs text-text-disabled">{plans.length} en el historial</span>
+      </div>
+      <Button size="sm" variant="secondary" onClick={onNew} disabled={currentId === 'new'}>
+        + Nuevo plan
+      </Button>
+    </div>
+  )
+}
 
 function ConsentCard({ consent, onGrant, onRevoke, loading }: {
   consent: any; onGrant: () => void; onRevoke: (id: number) => void; loading: boolean
@@ -312,10 +358,8 @@ function ValidationCard({ trace }: { trace: NonNullable<NutritionPlan['last_gene
           {issues.slice(0, 6).map((i, k) => <li key={k}>{i}</li>)}
         </ul>
       )}
-      <p className="text-[11px] text-text-disabled mt-2">
-        Trazabilidad: {trace.provider} · {trace.model} · prompt {trace.prompt_version} ·
-        {trace.estimated_cost_usd ? ` USD ${trace.estimated_cost_usd}` : ' costo n/d'} · datos seudonimizados
-      </p>
+      {/* La trazabilidad (proveedor, modelo, versión de prompt, costo, seudonimización)
+          se registra en la DB por cada generación (RF-IA-07) pero no se muestra en la UI. */}
     </div>
   )
 }

@@ -51,6 +51,12 @@ def generate_for_plan(plan: NutritionPlan, *, goal: str,
     """Ejecuta el pipeline completo sobre un plan existente. Devuelve (plan, report)."""
     patient = plan.patient
 
+    # No se regenera sobre un plan ya aprobado/compartido: eso pisaría una decisión
+    # clínica firmada. Para un plan nuevo se crea otro `NutritionPlan` (RF-IA-06).
+    if plan.status in (PlanStatus.APROBADO, PlanStatus.COMPARTIDO):
+        raise ValueError(
+            "El plan ya está aprobado; no se puede regenerar. Creá un plan nuevo.")
+
     if not has_active_consent(patient):
         raise ConsentError("El paciente no otorgó consentimiento para el uso de IA.")
 

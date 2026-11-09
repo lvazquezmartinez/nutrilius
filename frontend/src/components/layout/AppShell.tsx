@@ -13,7 +13,8 @@ const NAV_PRIMARY: NavItem[] = [
   { href: '/dashboard',    icon: Icons.Grid,       label: 'Dashboard' },
   { href: '/pacientes',    icon: Icons.Users,      label: 'Pacientes' },
   { href: '/agenda',       icon: Icons.Calendar,   label: 'Agenda' },
-  { href: '/planes',       icon: Icons.Table,      label: 'Planes' },
+  // 'Planes' no va en el menú: la gestión de planes vive dentro de cada paciente
+  // (Pacientes → paciente → pestaña Plan). La pantalla /planes era un placeholder.
   // 'Pagos' fuera del alcance de la tesis (módulo Billing no incluido).
 ]
 
