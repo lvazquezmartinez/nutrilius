@@ -29,33 +29,48 @@ turnos pública, auditoría de accesos, cifrado en reposo de datos clínicos y b
 
 ## Correr en local
 
-Requisitos: **Docker** + Docker Compose y **Node 20+**.
+Única dependencia: **Docker** + Docker Compose. El `docker-compose.yml` (en la raíz)
+levanta todo: PostgreSQL, Redis, RabbitMQ, MinIO, el backend (que corre las migraciones
+solo), el worker, el frontend y nginx. No hace falta instalar Python ni Node.
 
 ```bash
-# 1) Backend + base de datos
-cd backend
-cp .env.example .env          # completar variables (ver backend/.env.example)
-docker compose up -d          # API en http://localhost:8000
-docker compose run --rm backend python manage.py migrate
-docker compose run --rm backend python manage.py seed_demo   # datos de demo ficticios
+# 1) Variables de entorno (los valores de ejemplo sirven para local)
+cp .env.example .env
+cp backend/.env.example backend/.env
+
+# 2) Levantar todo
+docker compose up -d --build
+
+# 3) Cargar la cuenta de demostración con datos ficticios
+docker compose run --rm backend python manage.py seed_demo
 ```
 
-```bash
-# 2) Frontend (en otra terminal)
-cd frontend
-npm install
-npm run dev                   # http://localhost:3000
-```
+| Servicio       | URL                   |
+|----------------|-----------------------|
+| Frontend (app) | http://localhost:3000 |
+| API (backend)  | http://localhost:8000 |
 
 Entrá con `demo@nutrilius.com.ar` / `NutriliusDemo2026`.
 
-> Sin `AI_API_KEY`, el sistema usa un proveedor de IA **fake** (determinista) — permite
-> probar todo el flujo sin una clave de OpenAI.
+### Variables de entorno
+
+Los valores de `.env.example` sirven tal cual para local: todos los servicios base
+(PostgreSQL, Redis, RabbitMQ, MinIO) corren **dentro de Docker**, no necesitás ninguna
+cuenta externa. Los únicos servicios **externos son opcionales**:
+
+| Variable(s) | Para qué | ¿Obligatorio en local? |
+|---|---|---|
+| `AI_PROVIDER`, `AI_API_KEY`, `AI_MODEL` | Generación con IA real (OpenAI / OpenRouter) | **No** — sin clave real se usa el proveedor *fake* determinista |
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM` | Envío de emails (verificación, recordatorios) | **No** — sin SMTP la app anda; solo no envía emails |
+| `DJANGO_SECRET_KEY` | Clave de firma de Django | Cualquier cadena larga sirve en local |
+
+- **Con IA real** (opcional): en `backend/.env` → `AI_PROVIDER=openai`, `AI_API_KEY=sk-...`, `AI_MODEL=gpt-4o-mini`.
+- **Sin IA real** (más rápido para probar): dejá `AI_API_KEY` vacío o poné `AI_PROVIDER=FAKE`.
+  El proveedor *fake* recorre todo el flujo (generar → validar → aprobar) sin ninguna clave.
 
 ### Tests
 
 ```bash
-cd backend
 docker compose run --rm backend sh -c "pip install -r requirements-dev.txt && pytest"
 ```
 
