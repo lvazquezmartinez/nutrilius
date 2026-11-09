@@ -1,13 +1,13 @@
 # Nutrilius
 
-Prototipo de **sistema de gestión clínico-nutricional multi-consultorio** con **asistencia
-de IA supervisada** para planes alimentarios. Trabajo Final de Grado — Ingeniería en
-Software, Universidad Siglo 21 (modalidad Prototipado Tecnológico).
+**Sistema de gestión clínico-nutricional multi-consultorio con asistencia de IA
+supervisada para planes alimentarios.**
+Trabajo Final de Grado — Ingeniería en Software, Universidad Siglo 21
+(modalidad Prototipado Tecnológico).
 
-- **Demo en vivo:** https://nutrilius.com.ar
-  - Usuario: `demo@nutrilius.com.ar` · Contraseña: `NutriliusDemo2026`
-  - Datos **ficticios** (cuenta de demostración). No hay datos de pacientes reales.
 - **Repositorio:** https://github.com/lvazquezmartinez/nutrilius
+
+---
 
 ## Qué hace
 
@@ -18,7 +18,8 @@ agenda de turnos y reserva pública por enlace, y el **diferencial** del trabajo
 El plan nunca lo decide la IA sola. El flujo es:
 
 1. **Motor de reglas** — calcula el requerimiento energético y los macronutrientes del
-   paciente (Mifflin-St Jeor + objetivos + restricciones duras por patologías/alergias).
+   paciente (fórmula de Mifflin-St Jeor + objetivos + restricciones duras por
+   patologías/alergias).
 2. **IA acotada** — propone el menú **dentro** de esos límites, localizado a Argentina y
    a las Guías Alimentarias para la Población Argentina (GAPA).
 3. **Validador** — recalcula calorías/macros y controla los mínimos de las guías; marca si
@@ -31,6 +32,8 @@ Incluye además: PDF del plan con marca del consultorio, compartición por enlac
 auditoría de accesos a datos clínicos, cifrado en reposo de datos sensibles y
 seudonimización de los datos antes de enviarlos a la IA.
 
+---
+
 ## Stack
 
 - **Backend:** Python 3.12 · Django 5 · Django REST Framework · PostgreSQL
@@ -40,18 +43,20 @@ seudonimización de los datos antes de enviarlos a la IA.
 - **IA:** OpenAI (proveedor y modelo configurables), con un proveedor *fake* determinista
   para tests y demo sin consumir la API real
 
-## Correr en local
+---
 
-**Única dependencia: Docker + Docker Compose.** El `docker-compose.yml` (en la raíz)
-levanta todo: PostgreSQL, Redis, RabbitMQ, MinIO, el backend (que corre las migraciones
-solo), el worker, el frontend y nginx. No hace falta instalar Python ni Node.
+## Cómo levantarlo en local
+
+**Única dependencia: Docker + Docker Compose.** No hace falta instalar Python ni Node:
+el compose levanta la base de datos, el backend (que corre las migraciones solo),
+el worker, el frontend y un nginx.
 
 ```bash
 # 1) Clonar el repositorio
 git clone https://github.com/lvazquezmartinez/nutrilius.git
 cd nutrilius
 
-# 2) Variables de entorno (los valores de ejemplo sirven para local)
+# 2) Variables de entorno (copiar los ejemplos; valores por defecto sirven para local)
 cp .env.example .env
 cp backend/.env.example backend/.env
 
@@ -62,12 +67,15 @@ docker compose up -d --build
 docker compose run --rm backend python manage.py seed_demo
 ```
 
-| Servicio       | URL                   |
-|----------------|-----------------------|
-| Frontend (app) | http://localhost:3000 |
-| API (backend)  | http://localhost:8000 |
+Una vez arriba:
 
-Entrá con `demo@nutrilius.com.ar` / `NutriliusDemo2026`.
+| Servicio        | URL                      |
+|-----------------|--------------------------|
+| Frontend (app)  | http://localhost:3000    |
+| API (backend)   | http://localhost:8000    |
+
+Ingresá con **`demo@nutrilius.com.ar`** / **`NutriliusDemo2026`** (usuario de demostración
+que crea el `seed_demo`, con datos ficticios).
 
 ### Variables de entorno
 
@@ -77,21 +85,31 @@ Hay dos archivos (copiados de sus `.example` en el paso 2):
   RabbitMQ, MinIO). Son **internos**; los valores de ejemplo sirven tal cual para local.
 - **`backend/.env`** — configuración de la aplicación Django.
 
-No hace falta ninguna cuenta ni servicio externo para correrlo en local. Los únicos
-servicios **externos son opcionales**:
+**No hace falta ninguna cuenta ni servicio externo para correrlo en local:** la base de
+datos, la cache, la cola y el almacenamiento de archivos corren todos dentro de Docker.
+Los únicos servicios **externos** son **opcionales**:
 
 | Variable(s) | Para qué | ¿Externo? | ¿Obligatorio en local? |
 |---|---|---|---|
-| `AI_PROVIDER`, `AI_API_KEY`, `AI_MODEL` | Generación de planes con IA real (OpenAI / OpenRouter) | Sí | **No** — sin clave real se usa el proveedor *fake* determinista |
-| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM` | Envío de emails (verificación, recordatorios de turno) | Sí | **No** — sin SMTP la app funciona; solo no envía emails |
+| `AI_PROVIDER`, `AI_API_KEY`, `AI_MODEL` | Generación de planes con IA real (OpenAI u OpenRouter) | Sí | **No** — sin clave real se usa un proveedor *fake* determinista |
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM` | Envío de emails (verificación de cuenta, recordatorios de turno) | Sí | **No** — sin SMTP la app funciona igual; solo no se envían los emails |
 | `DJANGO_SECRET_KEY` | Clave de firma de Django | No | Cualquier cadena larga sirve en local |
 | `POSTGRES_*`, `REDIS_*`, `RABBITMQ_*`, `MINIO_*` / `S3_*` | Servicios base (Docker) | No | Los valores de ejemplo sirven |
 
-- **Con IA real** (opcional): en `backend/.env` → `AI_PROVIDER=openai`, `AI_API_KEY=sk-...`, `AI_MODEL=gpt-4o-mini`.
-- **Sin IA real** (más rápido para probar): dejá `AI_API_KEY` vacío o poné `AI_PROVIDER=FAKE`.
-  El proveedor *fake* recorre todo el flujo (generar → validar → aprobar) sin ninguna clave.
+**Para probar con IA real** (opcional): en `backend/.env` configurá el proveedor, tu clave
+y el modelo, por ejemplo:
 
-### Tests
+```
+AI_PROVIDER=openai
+AI_API_KEY=sk-...tu_clave_de_openai...
+AI_MODEL=gpt-4o-mini
+```
+
+**Para correr sin IA real** (lo más rápido para probar): dejá `AI_API_KEY` vacío o poné
+`AI_PROVIDER=FAKE`. El sistema usa un proveedor de IA **fake** determinista que permite
+recorrer todo el flujo (generar → validar → aprobar) sin ninguna clave.
+
+### Correr los tests
 
 ```bash
 docker compose run --rm backend sh -c "pip install -r requirements-dev.txt && pytest"
@@ -104,13 +122,9 @@ docker compose down          # detener (conserva los datos)
 docker compose down -v       # detener y borrar también la base de datos local
 ```
 
-## Desplegar
+---
 
-Infraestructura como código en **`infra/terraform/`** (GCP: Cloud Run, Cloud SQL, Cloud
-Storage + CDN, Secret Manager) y pipeline de **CI/CD** en `.github/workflows/ci-cd.yml`
-(build + deploy de backend y frontend). Ver **[infra/terraform/README.md](infra/terraform/README.md)**.
-
-## Estructura
+## Estructura del repositorio
 
 ```
 backend/apps/*     Un módulo por bounded context (identity, tenants, clinical,
@@ -119,10 +133,6 @@ frontend/src/*     Páginas, servicios y componentes (React)
 infra/terraform/*  Infraestructura como código (GCP)
 ```
 
-> La documentación de diseño (requerimientos, módulos, modelo de datos, DER, diccionario
-> de datos, casos de uso y decisiones técnicas) forma parte de la **tesis** y no se
-> versiona en el repositorio.
-
-## Licencia
-
-Proyecto académico (TFG). Uso educativo.
+La documentación de diseño (requerimientos, módulos, modelo de datos, DER, diccionario de
+datos, casos de uso y decisiones técnicas) forma parte de la **tesis** y no se versiona en
+el repositorio.
